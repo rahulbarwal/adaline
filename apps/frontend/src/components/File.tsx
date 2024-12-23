@@ -1,8 +1,8 @@
 import { FileType } from "@adaline/shared-types";
-import { useCheckedFiles } from "../context/CheckedFilesContext";
+import { useAppState } from "../context/AppStateContext";
 
 export const File = ({ id, title, icon }: FileType) => {
-  const { checkedFiles, toggleCheckedFile } = useCheckedFiles();
+  const { checkedFiles, toggleCheckedFile } = useAppState();
   const isChecked = checkedFiles.includes(id);
 
   const handleCheckboxChange = () => {

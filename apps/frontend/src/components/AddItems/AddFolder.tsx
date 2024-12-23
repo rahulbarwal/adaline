@@ -1,7 +1,7 @@
-import { useCheckedFiles } from "../../context/CheckedFilesContext";
+import { useAppState } from "../../context/AppStateContext";
 
 export const AddFolder = () => {
-  const { clearCheckedFiles } = useCheckedFiles();
+  const { clearCheckedFiles } = useAppState();
 
   const handleCreateFolder = () => {
     // Create folder logic here using checkedFiles array

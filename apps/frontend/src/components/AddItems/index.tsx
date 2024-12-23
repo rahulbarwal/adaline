@@ -1,10 +1,10 @@
 import { useEffect, useState } from "react";
-import { useCheckedFiles } from "../../context/CheckedFilesContext";
+import { useAppState } from "../../context/AppStateContext";
 import { AddFile } from "./AddFile";
 import { AddFolder } from "./AddFolder";
 
 export const AddItems = () => {
-  const { checkedFiles } = useCheckedFiles();
+  const { checkedFiles } = useAppState();
   const [isAdding, setIsAdding] = useState<"file" | "folder" | null>(null);
 
   useEffect(() => {
