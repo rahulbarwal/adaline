@@ -1,0 +1,8 @@
+{
+  "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "@adaline/shared-types": ["packages/shared-types/src"]
+    }
+  }
+}
