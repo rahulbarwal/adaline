@@ -11,6 +11,7 @@ export type FileType = BaseItemType & {
 
 export type FolderType = BaseItemType & {
   type: "folder";
+  isOpen: boolean;
   items: (FileType | FolderType)[];
 };
 

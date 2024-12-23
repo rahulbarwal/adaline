@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 import { v4 as uuidv4 } from "uuid";
 import db from "../db";
 import { DBFile } from "../types";
+import { foldersController } from "./folders";
 
 export class FilesController {
   createFile(req: Request, res: Response) {
@@ -67,17 +68,7 @@ export class FilesController {
         });
       })();
 
-      const files = db
-        .prepare(
-          `
-          SELECT * FROM files 
-          WHERE folder_id = ? 
-          ORDER BY order_num
-        `
-        )
-        .all(folderId);
-
-      res.json(files);
+      return foldersController.getAllItems(req, res);
     } catch (error) {
       res.status(500).json({ error: "Failed to reorder files" });
     }

@@ -1,6 +1,6 @@
-import { FolderType } from "@adaline/shared-types";
-import { ApiClient } from "./client";
+import { FolderType, ItemType } from "@adaline/shared-types";
 import { AxiosInstance } from "axios";
+import { ApiClient } from "./client";
 
 export class FoldersApi {
   private static instance: FoldersApi;
@@ -17,23 +17,23 @@ export class FoldersApi {
     return FoldersApi.instance;
   }
 
-  public async getAllFolders(): Promise<FolderType[]> {
-    const response = await this.client.get<FolderType[]>("/folders");
+  public async getAllFolders(): Promise<ItemType[]> {
+    const response = await this.client.get<ItemType[]>("/folders");
     return response.data;
   }
 
   public async createFolder(
     folder: Omit<FolderType, "id">
-  ): Promise<FolderType> {
-    const response = await this.client.post<FolderType>("/folders", folder);
+  ): Promise<ItemType[]> {
+    const response = await this.client.post<ItemType[]>("/folders", folder);
     return response.data;
   }
 
   public async toggleFolder(
     folderId: string,
     isOpen: boolean
-  ): Promise<FolderType> {
-    const response = await this.client.patch<FolderType>(
+  ): Promise<ItemType[]> {
+    const response = await this.client.patch<ItemType[]>(
       `/folders/${folderId}/toggle`,
       {
         isOpen,
@@ -42,9 +42,11 @@ export class FoldersApi {
     return response.data;
   }
 
-  public async reorderFolders(folderIds: string[]): Promise<FolderType[]> {
-    const response = await this.client.patch<FolderType[]>("/folders/reorder", {
-      folderIds,
+  public async reorderFolders(items: ItemType[]): Promise<ItemType[]> {
+    const response = await this.client.patch<ItemType[]>("/folders/reorder", {
+      folderIds: items
+        .filter((item) => item.type === "folder")
+        .map((item) => item.id),
     });
     return response.data;
   }

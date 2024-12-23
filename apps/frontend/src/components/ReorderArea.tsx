@@ -1,84 +1,67 @@
+import { FileType, ItemType } from "@adaline/shared-types";
 import { Reorder, useDragControls } from "motion/react";
+import { useCallback, useEffect, useState } from "react";
 import { useAppState } from "../context/AppStateContext";
-import { FolderType, FileType } from "@adaline/shared-types";
-import { Folder } from "./Folder";
-import { useState, useEffect } from "react";
 import { File } from "./File";
+import { Folder } from "./Folder";
 
 export function ReorderArea() {
-  const { folders, rootFiles, reorderFolders, reorderFiles, toggleFolder } =
-    useAppState();
+  const { items, reorderItems, reorderFiles, toggleFolder } = useAppState();
   const controls = useDragControls();
 
-  const [localFolders, setLocalFolders] = useState<FolderType[]>(folders);
-  const [localRootFiles, setLocalRootFiles] = useState<FileType[]>(rootFiles);
+  const [localItems, setLocalItems] = useState<ItemType[]>(items);
 
   useEffect(() => {
-    setLocalFolders(folders);
-  }, [folders]);
+    setLocalItems(items);
+  }, [items]);
+
+  const handleReorder = (newItems: ItemType[]) => {
+    setLocalItems(newItems);
+  };
 
   useEffect(() => {
-    setLocalRootFiles(rootFiles);
-  }, [rootFiles]);
+    (async () => {
+      if (JSON.stringify(localItems) !== JSON.stringify(items)) {
+        await reorderItems(localItems);
+      }
+    })();
+  }, [localItems, items, reorderItems]);
 
-  const handleReorder = (newOrder: FolderType[]) => {
-    setLocalFolders(newOrder);
+  const handleFilesReorder = async (folderId: string, newOrder: ItemType[]) => {
+    await reorderFiles(folderId, newOrder);
   };
 
-  const handleRootFilesReorder = (newOrder: FileType[]) => {
-    setLocalRootFiles(newOrder);
-  };
-
-  const handleDragEnd = async () => {
-    if (JSON.stringify(localFolders) !== JSON.stringify(folders)) {
-      await reorderFolders(localFolders);
+  const renderItem = (item: ItemType) => {
+    if (item.type === "file") {
+      return (
+        <Reorder.Item value={item} key={item.id} as="div">
+          <File {...item} />
+        </Reorder.Item>
+      );
     }
-  };
 
-  const handleRootFilesDragEnd = async () => {
-    if (JSON.stringify(localRootFiles) !== JSON.stringify(rootFiles)) {
-      await reorderFiles("0", localRootFiles);
-    }
+    return (
+      <Reorder.Item value={item} key={item.id} as="div">
+        <Folder
+          {...item}
+          changeOrderOfChildren={handleFilesReorder}
+          toggleFolder={toggleFolder}
+        />
+      </Reorder.Item>
+    );
   };
 
   return (
     <div className="flex flex-col gap-4">
-      {/* Root Files Section */}
       <Reorder.Group
         axis="y"
-        values={localRootFiles}
-        onReorder={handleRootFilesReorder}
-        dragControls={controls}
-        onDragEnd={handleRootFilesDragEnd}
-        as="div"
-        className="flex flex-col gap-2"
-      >
-        {localRootFiles.map((file) => (
-          <Reorder.Item value={file} key={file.id} as="div">
-            <File {...file} />
-          </Reorder.Item>
-        ))}
-      </Reorder.Group>
-
-      {/* Folders Section */}
-      <Reorder.Group
-        axis="y"
-        values={localFolders}
+        values={localItems}
         onReorder={handleReorder}
         dragControls={controls}
-        onDragEnd={handleDragEnd}
         as="div"
         className="flex flex-col gap-4"
       >
-        {localFolders.map((item: FolderType) => (
-          <Reorder.Item value={item} key={item.id} as="div">
-            <Folder
-              {...item}
-              changeOrderOfChildren={reorderFiles}
-              toggleFolder={toggleFolder}
-            />
-          </Reorder.Item>
-        ))}
+        {localItems.map(renderItem)}
       </Reorder.Group>
     </div>
   );

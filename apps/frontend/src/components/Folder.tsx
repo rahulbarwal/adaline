@@ -1,4 +1,4 @@
-import { FileType, FolderType } from "@adaline/shared-types";
+import { FolderType, ItemType } from "@adaline/shared-types";
 import { faFolder, faFolderOpen } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { Reorder, useDragControls } from "motion/react";
@@ -8,7 +8,7 @@ import { File } from "./File";
 interface FolderProps extends FolderType {
   changeOrderOfChildren: (
     folderId: string,
-    newOrder: FileType[]
+    newOrder: ItemType[]
   ) => Promise<void>;
   toggleFolder: (folderId: string) => Promise<void>;
 }
@@ -22,13 +22,13 @@ export function Folder({
   toggleFolder,
 }: FolderProps) {
   const controls = useDragControls();
-  const [localItems, setLocalItems] = useState<FileType[]>(items);
+  const [localItems, setLocalItems] = useState<ItemType[]>(items);
 
   useEffect(() => {
     setLocalItems(items);
   }, [items]);
 
-  const handleFilesReorder = (newOrder: FileType[]) => {
+  const handleFilesReorder = (newOrder: ItemType[]) => {
     setLocalItems(newOrder);
   };
 
@@ -40,11 +40,11 @@ export function Folder({
 
   return (
     <div className="w-full flex flex-col gap-2 rounded-md bg-yellow-200 p-2">
-      <div
-        className="flex items-center gap-2 p-2 rounded-md shadow-sm cursor-pointer"
-        onClick={() => toggleFolder(id)}
-      >
-        <FontAwesomeIcon icon={isOpen ? faFolderOpen : faFolder} />
+      <div className="flex items-center gap-2 p-2 rounded-md shadow-sm cursor-pointer">
+        <FontAwesomeIcon
+          icon={isOpen ? faFolderOpen : faFolder}
+          onClick={() => toggleFolder(id)}
+        />
         <span>{title}</span>
       </div>
       {isOpen && (
@@ -58,11 +58,13 @@ export function Folder({
             as="div"
             className="flex flex-col gap-2"
           >
-            {localItems.map((item) => (
-              <Reorder.Item value={item} key={item.id} as="div">
-                <File {...item} />
-              </Reorder.Item>
-            ))}
+            {localItems
+              .filter((item) => item.type === "file")
+              .map((item) => (
+                <Reorder.Item value={item} key={item.id} as="div">
+                  <File {...item} />
+                </Reorder.Item>
+              ))}
           </Reorder.Group>
         </div>
       )}
