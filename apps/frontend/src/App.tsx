@@ -1,43 +1,64 @@
+import { FileType, FolderType } from "@adaline/shared-types";
+import { Reorder } from "motion/react";
+import { useState } from "react";
 import "./App.css";
 import { Folder } from "./components/Folder";
 
 function App() {
+  const [items, setItems] = useState(nestedStructure);
+
+  const onFolderReorder = (newOrder: FolderType[]) => {
+    const updatedOrderIFolders = newOrder.map((item, index) => ({
+      ...item,
+      order: index + 1,
+    }));
+    setItems(updatedOrderIFolders);
+  };
+
+  const onFileReorder = (folderId: string, newOrder: FileType[]) => {
+    const folder = items.find((item) => item.id === folderId);
+    if (folder) {
+      folder.items = newOrder;
+      setItems([...items]);
+    }
+  };
+
   return (
-    <>
-      <Folder {...nestedStructure} />
-    </>
+    <Reorder.Group axis="y" values={items} onReorder={onFolderReorder} as="ol">
+      {items.map((item: FolderType) => (
+        <Reorder.Item value={item} key={item.id}>
+          <Folder {...item} changeOrderOfChildren={onFileReorder} />
+        </Reorder.Item>
+      ))}
+    </Reorder.Group>
   );
 }
 
 export default App;
 
-const nestedStructure = {
-  id: "0",
-  name: "Root Folder",
-  order: 0,
-  type: "folder",
-  items: [
-    {
-      id: "1",
-      name: "Folder 1",
-      order: 1,
-      type: "folder",
-      items: [
-        { id: "1", title: "File 1", icon: "file", order: 1, type: "file" },
-        { id: "2", title: "File 2", icon: "file", order: 2, type: "file" },
-        { id: "3", title: "File 3", icon: "file", order: 3, type: "file" },
-      ],
-    },
-    {
-      id: "2",
-      name: "Folder 2",
-      order: 2,
-      type: "folder",
-      items: [
-        { id: "4", title: "File 4", icon: "file", order: 4, type: "file" },
-        { id: "5", title: "File 5", icon: "file", order: 5, type: "file" },
-        { id: "6", title: "File 6", icon: "file", order: 6, type: "file" },
-      ],
-    },
-  ],
-};
+const nestedStructure: FolderType[] = [
+  {
+    id: "1",
+    title: "Folder 1",
+    order: 1,
+    type: "folder",
+    icon: "folder",
+    items: [
+      { id: "1", title: "File 1", icon: "file", order: 1, type: "file" },
+      { id: "2", title: "File 2", icon: "file", order: 2, type: "file" },
+      { id: "3", title: "File 3", icon: "file", order: 3, type: "file" },
+    ],
+  },
+  {
+    id: "2",
+    title: "Folder 2",
+    order: 2,
+    type: "folder",
+    icon: "folder",
+    items: [
+      { id: "4", title: "File 4", icon: "file", order: 4, type: "file" },
+      { id: "5", title: "File 5", icon: "file", order: 5, type: "file" },
+      { id: "6", title: "File 6", icon: "file", order: 6, type: "file" },
+    ],
+  },
+];

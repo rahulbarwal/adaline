@@ -1,12 +1,30 @@
-import { FolderType, ItemType } from "@adaline/shared-types";
+import { FileType, FolderType } from "@adaline/shared-types";
+import { Reorder } from "motion/react";
 import { File } from "./File";
 
-export function Folder({ items }: FolderType) {
+interface FolderProps extends FolderType {
+  changeOrderOfChildren: (folderId: string, newOrder: FileType[]) => void;
+}
+
+export function Folder({
+  id,
+  title,
+  items,
+  changeOrderOfChildren,
+}: FolderProps) {
+  const onReorder = (newOrder: FileType[]) => {
+    changeOrderOfChildren(id, newOrder);
+  };
   return (
-    <div>
-      {items.map((item: ItemType) =>
-        item.type === "folder" ? <Folder {...item} /> : <File {...item} />
-      )}
-    </div>
+    <>
+      <div>{title}</div>
+      <Reorder.Group axis="y" values={items} onReorder={onReorder} as="ul">
+        {items.map((item: FileType) => (
+          <Reorder.Item value={item} key={item.id}>
+            <File key={item.id} {...item} />
+          </Reorder.Item>
+        ))}
+      </Reorder.Group>
+    </>
   );
 }
