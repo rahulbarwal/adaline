@@ -157,10 +157,15 @@ export class FoldersController {
         items: JSON.parse(folder.items).filter(Boolean),
       }));
 
-      // Combine and sort all items
-      const allItems: ItemType[] = [...rootFiles, ...cleanedFolders].sort(
-        (a, b) => a.order - b.order
-      );
+      // Combine and sort all items - files first, then folders
+      const allItems: ItemType[] = [
+        ...rootFiles.sort(
+          (a, b) => (a as ItemType).order - (b as ItemType).order
+        ),
+        ...cleanedFolders.sort(
+          (a, b) => (a as ItemType).order - (b as ItemType).order
+        ),
+      ];
 
       res.json(allItems);
     } catch (error) {

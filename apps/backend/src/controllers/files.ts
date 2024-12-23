@@ -29,7 +29,7 @@ export class FilesController {
         .prepare("SELECT * FROM files WHERE id = ?")
         .get(id) as DBFile;
 
-      res.status(201).json(file);
+      return foldersController.getAllItems(req, res);
     } catch (error) {
       res.status(500).json({ error: "Failed to create file" });
     }
