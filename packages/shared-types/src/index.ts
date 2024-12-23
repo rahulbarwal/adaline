@@ -7,6 +7,7 @@ export type BaseItemType = {
 
 export type FileType = BaseItemType & {
   type: "file";
+  folderId: string;
 };
 
 export type FolderType = BaseItemType & {

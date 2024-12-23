@@ -33,13 +33,27 @@ export class FilesApi {
   public async reorderFiles(
     folderId: string,
     fileIds: string[]
-  ): Promise<FileType[]> {
-    const response = await this.client.patch<FileType[]>(
-      `/folders/${folderId}/files/reorder`,
+  ): Promise<ItemType[]> {
+    const response = await this.client.patch<ItemType[]>(
+      `/files/folders/${folderId}/files/reorder`,
       {
         fileIds,
       }
     );
+    return response.data;
+  }
+
+  // Add the new transfer method
+  public async transferFile(
+    fileId: string,
+    targetFolderId: string,
+    newOrder: number
+  ): Promise<ItemType[]> {
+    const response = await this.client.post<ItemType[]>("/files/transfer", {
+      fileId,
+      targetFolderId,
+      newOrder,
+    });
     return response.data;
   }
 }

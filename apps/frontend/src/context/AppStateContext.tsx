@@ -24,6 +24,11 @@ type AppStateContextType = {
   clearCheckedFiles: () => void;
   isLoading: boolean;
   error: string | null;
+  transferFile: (
+    fileId: string,
+    targetFolderId: string,
+    newOrder: number
+  ) => Promise<void>;
 };
 
 const AppStateContext = createContext<AppStateContextType | undefined>(
@@ -64,6 +69,7 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
         icon,
         type: "file",
         order: items.filter((item) => item.type === "file").length + 1,
+        folderId: "0",
       });
       setItems(newItems);
       setIsLoading(false);
@@ -147,6 +153,23 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
     setCheckedFiles([]);
   };
 
+  const transferFile = async (
+    fileId: string,
+    targetFolderId: string,
+    newOrder: number
+  ) => {
+    try {
+      const newItems = await filesApi.transferFile(
+        fileId,
+        targetFolderId,
+        newOrder
+      );
+      setItems(newItems);
+    } catch (error) {
+      console.error("Failed to transfer file:", error);
+    }
+  };
+
   return (
     <AppStateContext.Provider
       value={{
@@ -161,6 +184,7 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
         clearCheckedFiles,
         isLoading,
         error,
+        transferFile,
       }}
     >
       {children}

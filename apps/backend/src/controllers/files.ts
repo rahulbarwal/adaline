@@ -73,6 +73,38 @@ export class FilesController {
       res.status(500).json({ error: "Failed to reorder files" });
     }
   }
+
+  transferFile(req: Request, res: Response) {
+    try {
+      const { fileId, targetFolderId, newOrder } = req.body;
+
+      db.transaction(() => {
+        // Update file's folder and order
+        db.prepare(
+          `
+          UPDATE files 
+          SET folder_id = ?, order_num = ? 
+          WHERE id = ?
+        `
+        ).run(targetFolderId, newOrder, fileId);
+
+        // Reorder other files in the target folder
+        db.prepare(
+          `
+          UPDATE files 
+          SET order_num = order_num + 1 
+          WHERE folder_id = ? 
+          AND order_num >= ? 
+          AND id != ?
+        `
+        ).run(targetFolderId, newOrder, fileId);
+      })();
+
+      return foldersController.getAllItems(req, res);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to transfer file" });
+    }
+  }
 }
 
 export const filesController = new FilesController();
