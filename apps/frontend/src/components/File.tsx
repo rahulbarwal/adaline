@@ -1,5 +1,7 @@
 import { FileType } from "@adaline/shared-types";
 import { useAppState } from "../context/AppStateContext";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { IconProp } from "@fortawesome/fontawesome-svg-core";
 
 export const File = ({ id, title, icon }: FileType) => {
   const { checkedFiles, toggleCheckedFile } = useAppState();
@@ -18,7 +20,7 @@ export const File = ({ id, title, icon }: FileType) => {
         className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
         aria-label={`Select ${title}`}
       />
-      <span className="material-icons text-gray-600">{icon}</span>
+      <FontAwesomeIcon icon={icon as IconProp} />
       <span className="text-gray-800">{title}</span>
     </div>
   );

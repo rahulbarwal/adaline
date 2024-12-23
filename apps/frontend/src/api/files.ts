@@ -18,7 +18,15 @@ export class FilesApi {
   }
 
   public async createFile(file: Omit<FileType, "id">): Promise<FileType> {
-    const response = await this.client.post<FileType>("/files", file);
+    const response = await this.client.post<FileType>("/files", {
+      ...file,
+      folderId: "0", // Default to root folder
+    });
+    return response.data;
+  }
+
+  public async getRootFiles(): Promise<FileType[]> {
+    const response = await this.client.get<FileType[]>("/files/root");
     return response.data;
   }
 

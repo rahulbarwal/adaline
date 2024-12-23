@@ -17,6 +17,11 @@ export class FoldersApi {
     return FoldersApi.instance;
   }
 
+  public async getAllFolders(): Promise<FolderType[]> {
+    const response = await this.client.get<FolderType[]>("/folders");
+    return response.data;
+  }
+
   public async createFolder(
     folder: Omit<FolderType, "id">
   ): Promise<FolderType> {

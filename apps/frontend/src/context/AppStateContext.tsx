@@ -1,4 +1,10 @@
-import { createContext, useContext, useState, ReactNode } from "react";
+import {
+  createContext,
+  useContext,
+  useState,
+  ReactNode,
+  useEffect,
+} from "react";
 import { FileType, FolderType } from "@adaline/shared-types";
 import { foldersApi } from "../api/folders";
 import { filesApi } from "../api/files";
@@ -23,46 +29,40 @@ type AppStateContextType = {
   // Loading states
   isLoading: boolean;
   error: string | null;
+
+  // Root files related state and actions
+  rootFiles: FileType[];
 };
 
 const AppStateContext = createContext<AppStateContextType | undefined>(
   undefined
 );
 
-const initialFolders: FolderType[] = [
-  {
-    id: "1",
-    title: "Folder 1",
-    order: 1,
-    type: "folder",
-    icon: "folder",
-    isOpen: true,
-    items: [
-      { id: "1", title: "File 1", icon: "file", order: 1, type: "file" },
-      { id: "2", title: "File 2", icon: "file", order: 2, type: "file" },
-      { id: "3", title: "File 3", icon: "file", order: 3, type: "file" },
-    ],
-  },
-  {
-    id: "2",
-    title: "Folder 2",
-    order: 2,
-    type: "folder",
-    icon: "folder",
-    isOpen: true,
-    items: [
-      { id: "4", title: "File 4", icon: "file", order: 4, type: "file" },
-      { id: "5", title: "File 5", icon: "file", order: 5, type: "file" },
-      { id: "6", title: "File 6", icon: "file", order: 6, type: "file" },
-    ],
-  },
-];
-
 export function AppStateProvider({ children }: { children: ReactNode }) {
-  const [folders, setFolders] = useState<FolderType[]>(initialFolders);
+  const [folders, setFolders] = useState<FolderType[]>([]);
+  const [rootFiles, setRootFiles] = useState<FileType[]>([]);
   const [checkedFiles, setCheckedFiles] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setIsLoading(true);
+        const [fetchedFolders, fetchedRootFiles] = await Promise.all([
+          foldersApi.getAllFolders(),
+          filesApi.getRootFiles(),
+        ]);
+        setFolders(fetchedFolders);
+        setRootFiles(fetchedRootFiles);
+        setIsLoading(false);
+      } catch (error) {
+        handleApiError(error);
+      }
+    };
+
+    fetchData();
+  }, []);
 
   const handleApiError = (error: any) => {
     setError(error?.response?.data?.message || "An error occurred");
@@ -76,8 +76,9 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
         title: name,
         icon,
         type: "file",
-        order: 0,
+        order: rootFiles.length + 1,
       });
+      setRootFiles([...rootFiles, newFile]);
       setIsLoading(false);
       return newFile;
     } catch (error) {
@@ -166,6 +167,7 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
     <AppStateContext.Provider
       value={{
         folders,
+        rootFiles,
         reorderFolders,
         reorderFiles,
         toggleFolder,
