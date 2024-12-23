@@ -1,6 +1,6 @@
-import { FileType, ItemType } from "@adaline/shared-types";
+import { ItemType } from "@adaline/shared-types";
 import { Reorder, useDragControls } from "motion/react";
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { useAppState } from "../context/AppStateContext";
 import { File } from "./File";
 import { Folder } from "./Folder";
