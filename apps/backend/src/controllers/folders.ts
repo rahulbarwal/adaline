@@ -40,19 +40,24 @@ export class FoldersController {
       const { id } = req.params;
       const { isOpen } = req.body;
 
-      db.prepare("UPDATE folders SET is_open = ? WHERE id = ?").run(isOpen, id);
-
+      db.prepare("UPDATE folders SET is_open = ? WHERE id = ?").run(
+        isOpen ? 1 : 0,
+        id
+      );
       const folder = db
         .prepare(
           `
           SELECT f.*, json_group_array(
-            json_object(
-              'id', files.id,
-              'title', files.title,
-              'order', files.order_num,
-              'type', files.type,
-              'icon', files.icon
-            )
+            CASE 
+              WHEN files.id IS NULL THEN json('[]')
+              ELSE json_object(
+                'id', files.id,
+                'title', files.title,
+                'order', files.order_num,
+                'type', files.type,
+                'icon', files.icon
+              )
+            END
           ) as items
           FROM folders f
           LEFT JOIN files ON f.id = files.folder_id
