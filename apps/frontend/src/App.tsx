@@ -1,35 +1,43 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import "./App.css";
+import { Folder } from "./components/Folder";
 
 function App() {
-  const [count, setCount] = useState(0)
-
   return (
     <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.tsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
+      <Folder {...nestedStructure} />
     </>
-  )
+  );
 }
 
-export default App
+export default App;
+
+const nestedStructure = {
+  id: "0",
+  name: "Root Folder",
+  order: 0,
+  type: "folder",
+  items: [
+    {
+      id: "1",
+      name: "Folder 1",
+      order: 1,
+      type: "folder",
+      items: [
+        { id: "1", title: "File 1", icon: "file", order: 1, type: "file" },
+        { id: "2", title: "File 2", icon: "file", order: 2, type: "file" },
+        { id: "3", title: "File 3", icon: "file", order: 3, type: "file" },
+      ],
+    },
+    {
+      id: "2",
+      name: "Folder 2",
+      order: 2,
+      type: "folder",
+      items: [
+        { id: "4", title: "File 4", icon: "file", order: 4, type: "file" },
+        { id: "5", title: "File 5", icon: "file", order: 5, type: "file" },
+        { id: "6", title: "File 6", icon: "file", order: 6, type: "file" },
+      ],
+    },
+  ],
+};

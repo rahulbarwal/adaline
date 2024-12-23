@@ -1,14 +1,17 @@
-export interface ItemType {
+export type BaseItemType = {
   id: string;
   title: string;
   icon: string;
   order: number;
-  folderId: string | null;
-}
+};
 
-export interface FolderType {
-  id: string;
-  name: string;
-  isOpen: boolean;
-  order: number;
-}
+export type FileType = BaseItemType & {
+  type: "file";
+};
+
+export type FolderType = BaseItemType & {
+  type: "folder";
+  items: (FileType | FolderType)[];
+};
+
+export type ItemType = FileType | FolderType;

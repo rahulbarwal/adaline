@@ -1,5 +1,5 @@
-import { ItemType } from "@shared-types";
+import { FileType } from "@shared-types";
 
-export function File({ id, title, icon, order, folderId }: ItemType) {
+export function File({ id, title, icon, order, folderId }: FileType) {
   return <div>{title}</div>;
 }
