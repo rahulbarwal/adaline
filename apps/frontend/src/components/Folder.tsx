@@ -16,15 +16,18 @@ export function Folder({
     changeOrderOfChildren(id, newOrder);
   };
   return (
-    <>
-      <div>{title}</div>
-      <Reorder.Group axis="y" values={items} onReorder={onReorder} as="ul">
+    <div className="flex flex-col gap-2 rounded-md bg-yellow-200 p-2">
+      <strong className="text-lg flex flex-row gap-2 items-center text-yellow-800">
+        <div className="w-2 h-2 bg-yellow-600 rounded-full"></div>
+        {title}
+      </strong>
+      <Reorder.Group axis="y" values={items} onReorder={onReorder} as="div">
         {items.map((item: FileType) => (
-          <Reorder.Item value={item} key={item.id}>
+          <Reorder.Item value={item} key={item.id} as="div">
             <File key={item.id} {...item} />
           </Reorder.Item>
         ))}
       </Reorder.Group>
-    </>
+    </div>
   );
 }
