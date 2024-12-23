@@ -8,6 +8,7 @@ import {
 } from "react";
 import { filesApi } from "../api/files";
 import { foldersApi } from "../api/folders";
+import { io } from "socket.io-client";
 
 type AppStateContextType = {
   items: ItemType[];
@@ -54,6 +55,22 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
     };
 
     fetchData();
+  }, []);
+
+  useEffect(() => {
+    const socket = io("http://localhost:3000");
+
+    socket.on("connect", () => {
+      console.log("Connected to WebSocket server");
+    });
+
+    socket.on("items:updated", (updatedItems) => {
+      setItems(updatedItems);
+    });
+
+    return () => {
+      socket.disconnect();
+    };
   }, []);
 
   const handleApiError = (error: any) => {

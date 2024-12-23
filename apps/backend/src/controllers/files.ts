@@ -3,9 +3,10 @@ import { v4 as uuidv4 } from "uuid";
 import db from "../db";
 import { DBFile } from "../types";
 import { foldersController } from "./folders";
+import { Server } from "socket.io";
 
 export class FilesController {
-  createFile(req: Request, res: Response) {
+  createFile(req: Request & { io?: Server }, res: Response) {
     try {
       const { title, icon, folderId = "0" } = req.body;
       const id = uuidv4();
@@ -25,9 +26,9 @@ export class FilesController {
       `
       ).run(id, folderId, title, order, icon);
 
-      const file = db
-        .prepare("SELECT * FROM files WHERE id = ?")
-        .get(id) as DBFile;
+      // Get updated items list and emit
+      const allItems = foldersController.getAllItemsList();
+      req.io?.emit("items:updated", allItems);
 
       return foldersController.getAllItems(req, res);
     } catch (error) {
@@ -53,7 +54,7 @@ export class FilesController {
     }
   }
 
-  reorderFiles(req: Request, res: Response) {
+  reorderFiles(req: Request & { io?: Server }, res: Response) {
     try {
       const { folderId } = req.params;
       const { fileIds } = req.body;
@@ -68,18 +69,21 @@ export class FilesController {
         });
       })();
 
+      // Get updated items list and emit
+      const allItems = foldersController.getAllItemsList();
+      req.io?.emit("items:updated", allItems);
+
       return foldersController.getAllItems(req, res);
     } catch (error) {
       res.status(500).json({ error: "Failed to reorder files" });
     }
   }
 
-  transferFile(req: Request, res: Response) {
+  transferFile(req: Request & { io?: Server }, res: Response) {
     try {
       const { fileId, targetFolderId, newOrder } = req.body;
 
       db.transaction(() => {
-        // Update file's folder and order
         db.prepare(
           `
           UPDATE files 
@@ -88,7 +92,6 @@ export class FilesController {
         `
         ).run(targetFolderId, newOrder, fileId);
 
-        // Reorder other files in the target folder
         db.prepare(
           `
           UPDATE files 
@@ -99,6 +102,10 @@ export class FilesController {
         `
         ).run(targetFolderId, newOrder, fileId);
       })();
+
+      // Get updated items list and emit
+      const allItems = foldersController.getAllItemsList();
+      req.io?.emit("items:updated", allItems);
 
       return foldersController.getAllItems(req, res);
     } catch (error) {
