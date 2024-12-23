@@ -4,6 +4,7 @@ import { useState } from "react";
 import "./App.css";
 import { Folder } from "./components/Folder";
 import { AddItems } from "./components/AddItems";
+import { CheckedFilesProvider } from "./context/CheckedFilesContext";
 
 function App() {
   const [items, setItems] = useState(nestedStructure);
@@ -25,22 +26,24 @@ function App() {
   };
 
   return (
-    <div className="w-full h-full m-auto max-w-screen-lg p-8 flex flex-col gap-8">
-      <AddItems />
-      <Reorder.Group
-        axis="y"
-        values={items}
-        onReorder={onFolderReorder}
-        as="div"
-        className="flex flex-col gap-4 justify-start"
-      >
-        {items.map((item: FolderType, index: number) => (
-          <Reorder.Item value={item} key={item.id} as="div">
-            <Folder {...item} changeOrderOfChildren={onFileReorder} />
-          </Reorder.Item>
-        ))}
-      </Reorder.Group>
-    </div>
+    <CheckedFilesProvider>
+      <div className="w-full h-full m-auto max-w-screen-lg p-8 flex flex-col gap-8">
+        <AddItems />
+        <Reorder.Group
+          axis="y"
+          values={items}
+          onReorder={onFolderReorder}
+          as="div"
+          className="flex flex-col gap-4 justify-start"
+        >
+          {items.map((item: FolderType) => (
+            <Reorder.Item value={item} key={item.id} as="div">
+              <Folder {...item} changeOrderOfChildren={onFileReorder} />
+            </Reorder.Item>
+          ))}
+        </Reorder.Group>
+      </div>
+    </CheckedFilesProvider>
   );
 }
 
