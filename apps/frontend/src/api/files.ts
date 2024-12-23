@@ -1,4 +1,4 @@
-import { FileType } from "@adaline/shared-types";
+import { FileType, ItemType } from "@adaline/shared-types";
 import { ApiClient } from "./client";
 import { AxiosInstance } from "axios";
 
@@ -17,8 +17,8 @@ export class FilesApi {
     return FilesApi.instance;
   }
 
-  public async createFile(file: Omit<FileType, "id">): Promise<FileType> {
-    const response = await this.client.post<FileType>("/files", {
+  public async createFile(file: Omit<FileType, "id">): Promise<ItemType[]> {
+    const response = await this.client.post<ItemType[]>("/files", {
       ...file,
       folderId: "0", // Default to root folder
     });

@@ -1,13 +1,13 @@
+import { FolderType, ItemType } from "@adaline/shared-types";
 import {
   createContext,
-  useContext,
-  useState,
   ReactNode,
+  useContext,
   useEffect,
+  useState,
 } from "react";
-import { FileType, FolderType, ItemType } from "@adaline/shared-types";
-import { foldersApi } from "../api/folders";
 import { filesApi } from "../api/files";
+import { foldersApi } from "../api/folders";
 
 type AppStateContextType = {
   items: ItemType[];
@@ -18,7 +18,7 @@ type AppStateContextType = {
     name: string,
     fileIds: string[]
   ) => Promise<ItemType[] | undefined>;
-  createFile: (name: string, icon: string) => Promise<FileType | undefined>;
+  createFile: (name: string, icon: string) => Promise<ItemType[] | undefined>;
   checkedFiles: string[];
   toggleCheckedFile: (fileId: string) => void;
   clearCheckedFiles: () => void;
@@ -59,15 +59,15 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
   const createFile = async (name: string, icon: string) => {
     try {
       setIsLoading(true);
-      const newFile = await filesApi.createFile({
+      const newItems = await filesApi.createFile({
         title: name,
         icon,
         type: "file",
         order: items.filter((item) => item.type === "file").length + 1,
       });
-      setItems((prev) => [...prev, newFile]);
+      setItems(newItems);
       setIsLoading(false);
-      return newFile;
+      return newItems;
     } catch (error) {
       handleApiError(error);
     }
