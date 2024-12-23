@@ -12,6 +12,7 @@ import {
   faPaperclip,
   faLink,
   faFolder,
+  faFolderOpen,
 } from "@fortawesome/free-solid-svg-icons";
 import "./index.css";
 import App from "./App.tsx";
@@ -26,7 +27,8 @@ library.add(
   faThumbtack,
   faPaperclip,
   faLink,
-  faFolder
+  faFolder,
+  faFolderOpen
 );
 
 createRoot(document.getElementById("root")!).render(
