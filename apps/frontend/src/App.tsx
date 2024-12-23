@@ -25,6 +25,14 @@ function App() {
     }
   };
 
+  const toggleFolder = (folderId: string) => {
+    const folder = items.find((item) => item.id === folderId);
+    if (folder) {
+      folder.isOpen = !folder.isOpen;
+      setItems([...items]);
+    }
+  };
+
   return (
     <CheckedFilesProvider>
       <div className="w-full h-full m-auto max-w-screen-lg p-8 flex flex-col gap-8">
@@ -38,7 +46,11 @@ function App() {
         >
           {items.map((item: FolderType) => (
             <Reorder.Item value={item} key={item.id} as="div">
-              <Folder {...item} changeOrderOfChildren={onFileReorder} />
+              <Folder
+                {...item}
+                changeOrderOfChildren={onFileReorder}
+                toggleFolder={toggleFolder}
+              />
             </Reorder.Item>
           ))}
         </Reorder.Group>
@@ -56,6 +68,7 @@ const nestedStructure: FolderType[] = [
     order: 1,
     type: "folder",
     icon: "folder",
+    isOpen: true,
     items: [
       { id: "1", title: "File 1", icon: "file", order: 1, type: "file" },
       { id: "2", title: "File 2", icon: "file", order: 2, type: "file" },
@@ -68,6 +81,7 @@ const nestedStructure: FolderType[] = [
     order: 2,
     type: "folder",
     icon: "folder",
+    isOpen: true,
     items: [
       { id: "4", title: "File 4", icon: "file", order: 4, type: "file" },
       { id: "5", title: "File 5", icon: "file", order: 5, type: "file" },
