@@ -131,7 +131,7 @@ export class FoldersController {
             folder_order as "order",
             folder_type as type,
             folder_icon as icon,
-            is_open,
+            is_open as isOpen,
             json_group_array(
               CASE 
                 WHEN file_id IS NULL THEN NULL

@@ -47,7 +47,7 @@ export function Folder({
         />
         <span>{title}</span>
       </div>
-      {isOpen && (
+      {!!isOpen && (
         <div className="pl-8 mt-2">
           <Reorder.Group
             axis="y"
