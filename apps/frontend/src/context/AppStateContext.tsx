@@ -102,14 +102,36 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
   const createFolder = async (name: string, fileIds: string[]) => {
     try {
       setIsLoading(true);
+
+      // Get the selected files from anywhere in the hierarchy
+      const selectedFiles = fileIds
+        .map((fileId) => {
+          let foundFile: ItemType | undefined;
+
+          foundFile = items.find((item) => item.id === fileId);
+
+          if (!foundFile) {
+            items.forEach((item) => {
+              if (item.type === "folder" && item.items) {
+                const fileInFolder = item.items.find((f) => f.id === fileId);
+                if (fileInFolder) foundFile = fileInFolder;
+              }
+            });
+          }
+
+          return foundFile;
+        })
+        .filter((file): file is ItemType => file !== undefined);
+
       const allItems = await foldersApi.createFolder({
         title: name,
         icon: "folder",
         type: "folder",
         order: items.filter((item) => item.type === "folder").length + 1,
         isOpen: true,
-        items: items.filter((item) => fileIds.includes(item.id)),
+        items: selectedFiles,
       });
+
       setItems(allItems);
       clearCheckedFiles();
       setIsLoading(false);

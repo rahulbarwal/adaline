@@ -35,22 +35,23 @@ export class FoldersController {
 
         if (items && items.length > 0) {
           const updateParentStmt = db.prepare(
-            "UPDATE files SET folder_id = ? WHERE id = ?"
+            "UPDATE files SET folder_id = ?, order_num = ? WHERE id = ?"
           );
-          items.forEach((item: ItemType) => {
+
+          items.forEach((item: ItemType, index: number) => {
             if (item.type === "file") {
-              updateParentStmt.run(id, item.id);
+              updateParentStmt.run(id, index + 1, item.id);
             }
           });
         }
 
-        // Get updated items list and emit
         const allItems = this.getAllItemsList();
         req.io?.emit("items:updated", allItems);
 
         return this.getAllItems(req, res);
       })();
     } catch (error) {
+      console.error("Error creating folder:", error);
       res.status(500).json({ error: "Failed to create folder" });
     }
   }
