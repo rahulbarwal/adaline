@@ -12,7 +12,7 @@ import { io } from "socket.io-client";
 
 type AppStateContextType = {
   items: ItemType[];
-  reorderItems: (newOrder: ItemType[]) => Promise<void>;
+  reorderItems: (folderId: string, newOrder: ItemType[]) => Promise<void>;
   reorderFiles: (folderId: string, newOrder: ItemType[]) => Promise<void>;
   toggleFolder: (folderId: string) => Promise<void>;
   createFolder: (
@@ -116,7 +116,7 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const reorderItems = async (newOrder: ItemType[]) => {
+  const reorderItems = async (_: string, newOrder: ItemType[]) => {
     try {
       setIsLoading(true);
       const response = await foldersApi.reorderFolders(newOrder);
