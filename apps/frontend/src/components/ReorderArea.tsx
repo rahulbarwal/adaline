@@ -10,6 +10,10 @@ import { useState } from "react";
 export function ReorderArea() {
   const { items, toggleFolder } = useAppState();
   const { isDragging } = useDragAndDrop();
+  const [dropPosition, setDropPosition] = useState<"top" | "bottom" | null>(
+    null
+  );
+
   const {
     handleDragStart,
     handleDragEnd,
@@ -105,10 +109,6 @@ export function ReorderArea() {
       return renderFolder(item as FolderType);
     }
 
-    const [dropPosition, setDropPosition] = useState<"top" | "bottom" | null>(
-      null
-    );
-
     const itemProps = {
       draggable: true,
       onDragStart: (e: React.DragEvent) => handleDragStart(e, item),
@@ -141,7 +141,7 @@ export function ReorderArea() {
     };
 
     return (
-      <div {...itemProps}>
+      <div {...itemProps} key={item.id}>
         <File {...item} />
       </div>
     );
