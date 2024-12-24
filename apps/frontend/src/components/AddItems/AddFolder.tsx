@@ -19,6 +19,7 @@ export const AddFolder = () => {
     <div className="flex flex-col gap-2">
       <div className="flex flex-row gap-2 items-center">
         <input
+          autoFocus
           type="text"
           placeholder="Folder name"
           className="p-2 px-4 flex gap-2 items-center rounded-md w-full border-2 border-blue-600"

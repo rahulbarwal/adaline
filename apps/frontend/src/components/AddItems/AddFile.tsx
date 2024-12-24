@@ -22,6 +22,7 @@ export const AddFile = ({ onCancel }: AddFileProps) => {
   return (
     <div className="flex flex-row gap-2 items-center">
       <input
+        autoFocus
         type="text"
         placeholder="File name"
         className="p-2 px-4 flex gap-2 items-center rounded-md w-full border-2 border-blue-600"
