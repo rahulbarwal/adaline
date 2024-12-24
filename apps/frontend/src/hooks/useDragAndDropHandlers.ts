@@ -4,7 +4,8 @@ import { useDragAndDrop } from "../context/DragAndDropContext";
 
 export const useDragAndDropHandlers = () => {
   const { draggedItem, setIsDragging } = useDragAndDrop();
-  const { transferFile, reorderFiles, reorderItems } = useAppState();
+  const { transferFile, reorderFiles, reorderItems, updateItems } =
+    useAppState();
 
   const handleDragStart = (e: React.DragEvent, item: ItemType) => {
     e.stopPropagation();
@@ -154,25 +155,38 @@ export const useDragAndDropHandlers = () => {
     }
   };
 
-  const handleDropAtRoot = async (
+  const handleDropAtRoot = (
     e: React.DragEvent,
     targetItem: ItemType,
     items: ItemType[]
   ) => {
-    if (targetItem.type === "folder") {
-      await handleReorder(e, targetItem, items, {
-        folderId: "0",
-        reorderFn: reorderItems,
-        targetType: "folder",
-        filterFn: (item) => item.type === "folder",
-      });
-    } else {
-      await handleReorder(e, targetItem, items, {
-        folderId: "0",
-        reorderFn: reorderFiles,
-        targetType: "file",
-      });
-    }
+    e.preventDefault();
+
+    if (!draggedItem.current) return;
+
+    const draggedItemId = draggedItem.current.id;
+    if (draggedItemId === targetItem.id) return;
+
+    // Get drop position relative to target item's center
+    const targetRect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+    const isDropAfter = e.clientY > targetRect.top + targetRect.height / 2;
+
+    // Remove dragged item from its current position
+    const newItems = items.filter((item) => item.id !== draggedItemId);
+
+    // Find target index
+    const targetIndex = newItems.findIndex((item) => item.id === targetItem.id);
+
+    // Insert dragged item at the correct position
+    const insertIndex = isDropAfter ? targetIndex + 1 : targetIndex;
+    newItems.splice(insertIndex, 0, draggedItem.current);
+
+    // Update state with new order
+    updateItems(newItems);
+
+    // Reset drag state
+    draggedItem.current = null;
+    setIsDragging(false);
   };
 
   const handleDropInFolder = async (
@@ -181,11 +195,35 @@ export const useDragAndDropHandlers = () => {
     folderId: string,
     folderItems: ItemType[]
   ) => {
-    await handleReorder(e, targetItem, folderItems, {
-      folderId,
-      reorderFn: reorderFiles,
-      targetType: "file",
-    });
+    e.preventDefault();
+    e.stopPropagation();
+    handleDragLeave(e);
+
+    if (!draggedItem.current || draggedItem.current.type !== "file") return;
+
+    const targetRect = e.currentTarget.getBoundingClientRect();
+    const isDropAfter = e.clientY > targetRect.top + targetRect.height / 2;
+
+    // Get only files from folder items
+    const fileItems = folderItems.filter((item) => item.type === "file");
+
+    let newOrder;
+    if (fileItems.length === 0) {
+      newOrder = 1;
+    } else {
+      // Find target index among files
+      const targetIndex = fileItems.findIndex(
+        (item) => item.id === targetItem.id
+      );
+
+      // When dropping after, we want the position after the target
+      // When dropping before, we want the target's position
+      newOrder = isDropAfter ? targetIndex + 2 : targetIndex + 1;
+    }
+
+    await transferFile(draggedItem.current.id, folderId, newOrder);
+    draggedItem.current = null;
+    setIsDragging(false);
   };
 
   const handleFolderDrop = async (

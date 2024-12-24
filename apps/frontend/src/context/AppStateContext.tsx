@@ -9,6 +9,7 @@ import {
 import { filesApi } from "../api/files";
 import { foldersApi } from "../api/folders";
 import { io } from "socket.io-client";
+import { useDragAndDrop } from "../context/DragAndDropContext";
 
 type AppStateContextType = {
   items: ItemType[];
@@ -30,6 +31,7 @@ type AppStateContextType = {
     targetFolderId: string,
     newOrder: number
   ) => Promise<void>;
+  updateItems: (items: ItemType[]) => Promise<void>;
 };
 
 const AppStateContext = createContext<AppStateContextType | undefined>(
@@ -41,6 +43,7 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
   const [checkedFiles, setCheckedFiles] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const { draggedItem } = useDragAndDrop();
 
   useEffect(() => {
     const fetchData = async () => {
@@ -187,6 +190,29 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const updateItems = async (newItems: ItemType[]) => {
+    try {
+      setIsLoading(true);
+      let response;
+
+      // Check if we're reordering files or folders
+      if (draggedItem.current?.type === "file") {
+        const rootFiles = newItems.filter((item) => item.type === "file");
+        response = await filesApi.reorderFiles(
+          "0",
+          rootFiles.map((file) => file.id)
+        );
+      } else {
+        response = await foldersApi.reorderFolders(newItems);
+      }
+
+      setItems(response);
+      setIsLoading(false);
+    } catch (error) {
+      handleApiError(error);
+    }
+  };
+
   return (
     <AppStateContext.Provider
       value={{
@@ -202,6 +228,7 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
         isLoading,
         error,
         transferFile,
+        updateItems,
       }}
     >
       {children}

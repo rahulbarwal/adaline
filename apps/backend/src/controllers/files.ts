@@ -4,6 +4,7 @@ import db from "../db";
 import { DBFile } from "../types";
 import { foldersController } from "./folders";
 import { Server } from "socket.io";
+import { FileType } from "@adaline/shared-types";
 
 export class FilesController {
   createFile(req: Request & { io?: Server }, res: Response) {
@@ -84,22 +85,60 @@ export class FilesController {
       const { fileId, targetFolderId, newOrder } = req.body;
 
       db.transaction(() => {
-        db.prepare(
-          `
-          UPDATE files 
-          SET folder_id = ?, order_num = ? 
-          WHERE id = ?
-        `
-        ).run(targetFolderId, newOrder, fileId);
+        // Get current file info
+        const currentFile: FileType = db
+          .prepare(
+            `SELECT folder_id as folderId, order_num as "order" FROM files WHERE id = ?`
+          )
+          .get(fileId) as FileType;
 
+        // Moving to different folder
+        if (currentFile.folderId !== targetFolderId) {
+          // First, shift up items in the old folder
+          db.prepare(
+            `UPDATE files
+             SET order_num = order_num - 1
+             WHERE folder_id = ?
+             AND order_num > ?`
+          ).run(currentFile.folderId, currentFile.order);
+
+          // Then, shift down items in the new folder
+          db.prepare(
+            `UPDATE files
+             SET order_num = order_num + 1
+             WHERE folder_id = ?
+             AND order_num >= ?`
+          ).run(targetFolderId, newOrder);
+        } else {
+          // Moving within same folder
+          if (currentFile.order < newOrder) {
+            // Moving down - shift items up
+            db.prepare(
+              `UPDATE files 
+               SET order_num = order_num - 1
+               WHERE folder_id = ?
+               AND order_num > ?
+               AND order_num <= ?
+               AND id != ?`
+            ).run(targetFolderId, currentFile.order, newOrder - 1, fileId);
+          } else {
+            // Moving up - shift items down
+            db.prepare(
+              `UPDATE files
+               SET order_num = order_num + 1
+               WHERE folder_id = ?
+               AND order_num >= ?
+               AND order_num < ?
+               AND id != ?`
+            ).run(targetFolderId, newOrder, currentFile.order, fileId);
+          }
+        }
+
+        // Finally, update the dragged file's position
         db.prepare(
-          `
-          UPDATE files 
-          SET order_num = order_num + 1 
-          WHERE folder_id = ? 
-          AND order_num >= ? 
-          AND id != ?
-        `
+          `UPDATE files 
+           SET folder_id = ?, order_num = ?
+           WHERE id = ?`
         ).run(targetFolderId, newOrder, fileId);
       })();
 
@@ -109,6 +148,7 @@ export class FilesController {
 
       return foldersController.getAllItems(req, res);
     } catch (error) {
+      console.error("Failed to transfer file:", error);
       res.status(500).json({ error: "Failed to transfer file" });
     }
   }

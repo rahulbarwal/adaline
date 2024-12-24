@@ -5,6 +5,7 @@ import { useAppState } from "../context/AppStateContext";
 import { useDragAndDrop } from "../context/DragAndDropContext";
 import { File } from "./File";
 import { useDragAndDropHandlers } from "../hooks/useDragAndDropHandlers";
+import { useState } from "react";
 
 export function ReorderArea() {
   const { items, toggleFolder } = useAppState();
@@ -104,22 +105,43 @@ export function ReorderArea() {
       return renderFolder(item as FolderType);
     }
 
+    const [dropPosition, setDropPosition] = useState<"top" | "bottom" | null>(
+      null
+    );
+
     const itemProps = {
       draggable: true,
       onDragStart: (e: React.DragEvent) => handleDragStart(e, item),
       onDragEnd: handleDragEnd,
-      onDragOver: (e: React.DragEvent) => handleDragOver(e, item),
-      onDragLeave: handleDragLeave,
-      onDrop: (e: React.DragEvent) => handleDropAtRoot(e, item, items),
-      className: `cursor-move transition-all duration-200 ${
+      onDragOver: (e: React.DragEvent) => {
+        handleDragOver(e, item);
+        const rect = e.currentTarget.getBoundingClientRect();
+        setDropPosition(
+          e.clientY > rect.top + rect.height / 2 ? "bottom" : "top"
+        );
+      },
+      onDragLeave: (e: React.DragEvent) => {
+        handleDragLeave(e);
+        setDropPosition(null);
+      },
+      onDrop: (e: React.DragEvent) => {
+        handleDropAtRoot(e, item, items);
+        setDropPosition(null);
+      },
+      className: `cursor-move p-2 rounded-md transition-all duration-200 ${
         draggedItem.current?.id === item.id ? "opacity-50" : "hover:bg-gray-50"
+      } ${
+        isDragging && draggedItem.current?.type === "file"
+          ? "relative before:absolute before:left-0 before:right-0 before:transition-all before:duration-200" +
+            (dropPosition === "bottom" ? " before:bottom-0" : " before:top-0")
+          : ""
       }`,
       key: item.id,
       role: "listitem",
     };
 
     return (
-      <div {...itemProps} key={item.id}>
+      <div {...itemProps}>
         <File {...item} />
       </div>
     );
