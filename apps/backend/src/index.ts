@@ -1,12 +1,12 @@
 import cors from "cors";
 import express from "express";
 import { createServer } from "http";
-import { Server } from "socket.io";
+import { Server, Socket } from "socket.io";
 import folderRoutes from "./routes/folders";
 import fileRoutes from "./routes/files";
+import { SocketController } from "./controllers/sockets";
+import { ItemType, SOCKET_EVENTS } from "@adaline/shared-types";
 import { foldersController } from "./controllers/folders";
-import { isTruthy } from "./validity-utils";
-import { SOCKET_EVENTS } from "@adaline/shared-types";
 
 const app = express();
 const httpServer = createServer(app);
@@ -16,6 +16,7 @@ const io = new Server(httpServer, {
     methods: ["GET", "POST", "PUT", "DELETE"],
   },
 });
+const socketController = new SocketController(io);
 
 app.use(cors());
 app.use(express.json());
@@ -30,29 +31,23 @@ app.use("/api/folders", folderRoutes);
 app.use("/api/files", fileRoutes);
 
 // WebSocket event handlers
-io.on("connection", (socket) => {
-  console.log("Client connected:", socket.id);
-  io.emit(
-    SOCKET_EVENTS.SEND_ALL_ITEMS,
-    foldersController.getAllItemsViaSockets(),
-  );
 
-  socket.on(
-    SOCKET_EVENTS.FOLDER_EVENTS.TOGGLE_FOLDER,
-    ({ folderId, isOpen }: { folderId: string; isOpen: boolean }) => {
-      if (!isTruthy(folderId) || !isTruthy(isOpen)) {
-        throw new Error("Invalid folderId or isOpen value");
-      }
-      io.emit(
-        SOCKET_EVENTS.SEND_ALL_ITEMS,
-        foldersController.toggleFolder(folderId, isOpen),
-      );
-    },
-  );
+io.on("connection", (socket: Socket) => {
+  console.log("Client connected:", socket.id);
+
+  socketController.emitUpdatedItemsForHomePage();
 
   socket.on("disconnect", () => {
     console.log("Client disconnected:", socket.id);
   });
+
+  socket.on(
+    SOCKET_EVENTS.FOLDER_EVENTS.TOGGLE_FOLDER,
+    ({ folderId, isOpen }) => {
+      socketController.onFolderToggle(folderId, isOpen);
+      socketController.emitUpdatedItemsForHomePage();
+    },
+  );
 });
 
 const PORT = 3000;

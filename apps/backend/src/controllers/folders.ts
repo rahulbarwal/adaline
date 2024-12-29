@@ -61,8 +61,6 @@ export class FoldersController {
         isOpen ? 1 : 0,
         folderId,
       );
-
-      return this.getAllItemsList();
     } catch (error) {
       throw new Error("Failed to toggle folder");
     }
