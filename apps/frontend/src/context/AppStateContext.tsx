@@ -47,21 +47,6 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
   const { draggedItem } = useDragAndDrop();
 
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        setIsLoading(true);
-        const response = await foldersApi.getAllFolders();
-        setItems(response);
-        setIsLoading(false);
-      } catch (error) {
-        handleApiError(error);
-      }
-    };
-
-    fetchData();
-  }, []);
-
-  useEffect(() => {
     console.log("Connecting to WebSocket server");
     socketClient.connect();
     socketClient.on("connect", () => {

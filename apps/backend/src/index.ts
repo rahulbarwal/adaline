@@ -32,6 +32,11 @@ app.use("/api/files", fileRoutes);
 // WebSocket event handlers
 io.on("connection", (socket) => {
   console.log("Client connected:", socket.id);
+  io.emit(
+    SOCKET_EVENTS.SEND_ALL_ITEMS,
+    foldersController.getAllItemsViaSockets(),
+  );
+
   socket.on(
     SOCKET_EVENTS.FOLDER_EVENTS.TOGGLE_FOLDER,
     ({ folderId, isOpen }: { folderId: string; isOpen: boolean }) => {

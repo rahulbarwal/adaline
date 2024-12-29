@@ -17,13 +17,8 @@ export class FoldersApi {
     return FoldersApi.instance;
   }
 
-  public async getAllFolders(): Promise<ItemType[]> {
-    const response = await this.client.get<ItemType[]>("/folders");
-    return response.data;
-  }
-
   public async createFolder(
-    folder: Omit<FolderType, "id">
+    folder: Omit<FolderType, "id">,
   ): Promise<ItemType[]> {
     const response = await this.client.post<ItemType[]>("/folders", folder);
     return response.data;
@@ -31,13 +26,13 @@ export class FoldersApi {
 
   public async toggleFolder(
     folderId: string,
-    isOpen: boolean
+    isOpen: boolean,
   ): Promise<ItemType[]> {
     const response = await this.client.patch<ItemType[]>(
       `/folders/${folderId}/toggle`,
       {
         isOpen,
-      }
+      },
     );
     return response.data;
   }

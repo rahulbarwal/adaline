@@ -179,6 +179,14 @@ export class FoldersController {
       res.status(500).json({ error: "Failed to fetch items" });
     }
   }
+
+  getAllItemsViaSockets() {
+    try {
+      return this.getAllItemsList();
+    } catch (error) {
+      console.error("Error in getAllItems:", error);
+    }
+  }
 }
 
 export const foldersController = new FoldersController();
