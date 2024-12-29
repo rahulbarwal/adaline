@@ -1,4 +1,5 @@
-import { FolderType, ItemType } from "@adaline/shared-types";
+import { FolderType, ItemType, SOCKET_EVENTS } from "@adaline/shared-types";
+
 import {
   createContext,
   ReactNode,
@@ -175,7 +176,7 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
         (item) => item.type === "folder" && item.id === folderId,
       ) as FolderType;
       if (folder) {
-        socketClient.emit("folder:toggle", {
+        socketClient.emit(SOCKET_EVENTS.FOLDER_EVENTS.TOGGLE_FOLDER, {
           folderId,
           isOpen: !folder.isOpen,
         });

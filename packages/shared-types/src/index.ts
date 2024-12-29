@@ -1,3 +1,5 @@
+export { SOCKET_EVENTS } from "./socketEventConstants";
+
 export type BaseItemType = {
   id: string;
   title: string;

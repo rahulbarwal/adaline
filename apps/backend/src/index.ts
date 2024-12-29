@@ -6,6 +6,7 @@ import folderRoutes from "./routes/folders";
 import fileRoutes from "./routes/files";
 import { foldersController } from "./controllers/folders";
 import { isTruthy } from "./validity-utils";
+import { SOCKET_EVENTS } from "@adaline/shared-types";
 
 const app = express();
 const httpServer = createServer(app);
@@ -32,13 +33,13 @@ app.use("/api/files", fileRoutes);
 io.on("connection", (socket) => {
   console.log("Client connected:", socket.id);
   socket.on(
-    "folder:toggle",
+    SOCKET_EVENTS.FOLDER_EVENTS.TOGGLE_FOLDER,
     ({ folderId, isOpen }: { folderId: string; isOpen: boolean }) => {
       if (!isTruthy(folderId) || !isTruthy(isOpen)) {
         throw new Error("Invalid folderId or isOpen value");
       }
       io.emit(
-        "items:updated",
+        SOCKET_EVENTS.SEND_ALL_ITEMS,
         foldersController.toggleFolder(folderId, isOpen),
       );
     },
