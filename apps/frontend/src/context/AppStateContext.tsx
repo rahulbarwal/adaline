@@ -11,7 +11,6 @@ import { filesApi } from "../api/files";
 import { foldersApi } from "../api/folders";
 import { socketClient } from "../socket";
 import { useDragAndDrop } from "../context/DragAndDropContext";
-import { Socket } from "node_modules/socket.io-client/build/cjs";
 
 type AppStateContextType = {
   items: ItemType[];

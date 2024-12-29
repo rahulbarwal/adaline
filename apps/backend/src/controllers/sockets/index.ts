@@ -16,10 +16,10 @@ export class SocketController {
   emitUpdatedItemsForHomePage() {
     try {
       const items = foldersController.getAllItemsViaSockets();
-      this.io.emit(SOCKET_EVENTS.SEND_ALL_ITEMS, items);
+      this.io.emit(SOCKET_EVENTS.ITEMS_UPDATED, items);
     } catch (error) {
       console.error("Error emitting updated items to all clients:", error);
-      this.io.emit(SOCKET_EVENTS.SEND_ALL_ITEMS, []);
+      this.io.emit(SOCKET_EVENTS.ITEMS_UPDATED, []);
     }
   }
 
