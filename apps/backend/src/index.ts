@@ -34,7 +34,6 @@ app.use("/api/files", fileRoutes);
 
 io.on("connection", (socket: Socket) => {
   console.log("Client connected:", socket.id);
-
   socketController.emitUpdatedItemsForHomePage();
 
   socket.on("disconnect", () => {

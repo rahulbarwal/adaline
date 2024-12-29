@@ -11,6 +11,7 @@ import { filesApi } from "../api/files";
 import { foldersApi } from "../api/folders";
 import { socketClient } from "../socket";
 import { useDragAndDrop } from "../context/DragAndDropContext";
+import { Socket } from "node_modules/socket.io-client/build/cjs";
 
 type AppStateContextType = {
   items: ItemType[];
@@ -47,21 +48,19 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
   const { draggedItem } = useDragAndDrop();
 
   useEffect(() => {
-    console.log("Connecting to WebSocket server");
     socketClient.connect();
-    socketClient.on("connect", () => {
+    socketClient.on(SOCKET_EVENTS.CONNECT, () => {
       console.log("Connected to WebSocket server");
     });
 
-    socketClient.on("items:updated", (updatedItems) => {
-      console.log("Received updated items");
+    socketClient.on(SOCKET_EVENTS.ITEMS_UPDATED, (updatedItems) => {
       setItems(updatedItems);
     });
 
     return () => {
       console.log("Going to disconnect");
-      socketClient.off("connect");
-      socketClient.off("items:updated");
+      socketClient.off(SOCKET_EVENTS.CONNECT);
+      socketClient.off(SOCKET_EVENTS.ITEMS_UPDATED);
       socketClient.disconnect();
     };
   }, []);

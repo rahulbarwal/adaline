@@ -4,5 +4,6 @@ export const SOCKET_EVENTS = {
     CREATE_FOLDER: "folder:create",
     REORDER_FOLDERS: "folder:reorder",
   },
-  SEND_ALL_ITEMS: "items:updated",
+  ITEMS_UPDATED: "items:updated",
+  CONNECT: "connect",
 } as const;
