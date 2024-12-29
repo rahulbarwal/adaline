@@ -8,7 +8,7 @@ import {
 } from "react";
 import { filesApi } from "../api/files";
 import { foldersApi } from "../api/folders";
-import { io } from "socket.io-client";
+import { socketClient } from "../socket";
 import { useDragAndDrop } from "../context/DragAndDropContext";
 
 type AppStateContextType = {
@@ -18,7 +18,7 @@ type AppStateContextType = {
   toggleFolder: (folderId: string) => Promise<void>;
   createFolder: (
     name: string,
-    fileIds: string[]
+    fileIds: string[],
   ) => Promise<ItemType[] | undefined>;
   createFile: (name: string, icon: string) => Promise<ItemType[] | undefined>;
   checkedFiles: string[];
@@ -29,13 +29,13 @@ type AppStateContextType = {
   transferFile: (
     fileId: string,
     targetFolderId: string,
-    newOrder: number
+    newOrder: number,
   ) => Promise<void>;
   updateItems: (items: ItemType[]) => Promise<void>;
 };
 
 const AppStateContext = createContext<AppStateContextType | undefined>(
-  undefined
+  undefined,
 );
 
 export function AppStateProvider({ children }: { children: ReactNode }) {
@@ -61,18 +61,22 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
   }, []);
 
   useEffect(() => {
-    const socket = io("http://localhost:3000");
-
-    socket.on("connect", () => {
+    console.log("Connecting to WebSocket server");
+    socketClient.connect();
+    socketClient.on("connect", () => {
       console.log("Connected to WebSocket server");
     });
 
-    socket.on("items:updated", (updatedItems) => {
+    socketClient.on("items:updated", (updatedItems) => {
+      console.log("Received updated items");
       setItems(updatedItems);
     });
 
     return () => {
-      socket.disconnect();
+      console.log("Going to disconnect");
+      socketClient.off("connect");
+      socketClient.off("items:updated");
+      socketClient.disconnect();
     };
   }, []);
 
@@ -168,14 +172,13 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
     try {
       setIsLoading(true);
       const folder = items.find(
-        (item) => item.type === "folder" && item.id === folderId
+        (item) => item.type === "folder" && item.id === folderId,
       ) as FolderType;
       if (folder) {
-        const response = await foldersApi.toggleFolder(
+        socketClient.emit("folder:toggle", {
           folderId,
-          !folder.isOpen
-        );
-        setItems(response);
+          isOpen: !folder.isOpen,
+        });
       }
       setIsLoading(false);
     } catch (error) {
@@ -187,7 +190,7 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
     setCheckedFiles((prev) =>
       prev.includes(fileId)
         ? prev.filter((id) => id !== fileId)
-        : [...prev, fileId]
+        : [...prev, fileId],
     );
   };
 
@@ -198,13 +201,13 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
   const transferFile = async (
     fileId: string,
     targetFolderId: string,
-    newOrder: number
+    newOrder: number,
   ) => {
     try {
       const newItems = await filesApi.transferFile(
         fileId,
         targetFolderId,
-        newOrder
+        newOrder,
       );
       setItems(newItems);
     } catch (error) {
@@ -222,7 +225,7 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
         const rootFiles = newItems.filter((item) => item.type === "file");
         response = await filesApi.reorderFiles(
           "0",
-          rootFiles.map((file) => file.id)
+          rootFiles.map((file) => file.id),
         );
       } else {
         response = await foldersApi.reorderFolders(newItems);

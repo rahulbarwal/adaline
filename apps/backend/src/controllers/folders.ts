@@ -30,12 +30,12 @@ export class FoldersController {
           `
           INSERT INTO folders (id, title, order_num, type, icon, is_open)
           VALUES (?, ?, ?, 'folder', 'folder', true)
-          `
+          `,
         ).run(id, title, order);
 
         if (items && items.length > 0) {
           const updateParentStmt = db.prepare(
-            "UPDATE files SET folder_id = ?, order_num = ? WHERE id = ?"
+            "UPDATE files SET folder_id = ?, order_num = ? WHERE id = ?",
           );
 
           items.forEach((item: ItemType, index: number) => {
@@ -56,23 +56,16 @@ export class FoldersController {
     }
   }
 
-  toggleFolder(req: Request & { io?: Server }, res: Response) {
+  toggleFolder(folderId: string, isOpen: boolean) {
     try {
-      const { id } = req.params;
-      const { isOpen } = req.body;
-
       db.prepare("UPDATE folders SET is_open = ? WHERE id = ?").run(
         isOpen ? 1 : 0,
-        id
+        folderId,
       );
 
-      // Get updated items list and emit
-      const allItems = this.getAllItemsList();
-      req.io?.emit("items:updated", allItems);
-
-      this.getAllItems(req, res);
+      return this.getAllItemsList();
     } catch (error) {
-      res.status(500).json({ error: "Failed to toggle folder" });
+      throw new Error("Failed to toggle folder");
     }
   }
 
@@ -103,16 +96,16 @@ export class FoldersController {
     const rootFiles = db
       .prepare(
         `
-        SELECT 
+        SELECT
           id,
           title,
           order_num as "order",
           type,
           icon
-        FROM files 
+        FROM files
         WHERE folder_id = '0'
         ORDER BY order_num
-      `
+      `,
       )
       .all();
 
@@ -120,7 +113,7 @@ export class FoldersController {
       .prepare(
         `
         WITH FolderFiles AS (
-          SELECT 
+          SELECT
             f.id as folder_id,
             f.title as folder_title,
             f.order_num as folder_order,
@@ -137,7 +130,7 @@ export class FoldersController {
           WHERE f.id != '0'
           ORDER BY f.order_num, files.order_num
         )
-        SELECT 
+        SELECT
           folder_id as id,
           folder_title as title,
           folder_order as "order",
@@ -145,7 +138,7 @@ export class FoldersController {
           folder_icon as icon,
           is_open as isOpen,
           json_group_array(
-            CASE 
+            CASE
               WHEN file_id IS NULL THEN NULL
               ELSE json_object(
                 'id', file_id,
@@ -159,7 +152,7 @@ export class FoldersController {
         FROM FolderFiles
         GROUP BY folder_id
         ORDER BY folder_order
-      `
+      `,
       )
       .all();
 
@@ -170,10 +163,10 @@ export class FoldersController {
 
     return [
       ...rootFiles.sort(
-        (a, b) => (a as ItemType).order - (b as ItemType).order
+        (a, b) => (a as ItemType).order - (b as ItemType).order,
       ),
       ...cleanedFolders.sort(
-        (a, b) => (a as ItemType).order - (b as ItemType).order
+        (a, b) => (a as ItemType).order - (b as ItemType).order,
       ),
     ];
   }
