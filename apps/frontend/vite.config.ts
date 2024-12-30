@@ -15,5 +15,6 @@ export default defineConfig({
   },
   optimizeDeps: {
     include: ["@adaline/shared-types"],
+    force: true,
   },
 });

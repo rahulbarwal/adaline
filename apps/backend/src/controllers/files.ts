@@ -7,14 +7,14 @@ import { Server } from "socket.io";
 import { FileType } from "@adaline/shared-types";
 
 export class FilesController {
-  createFile(req: Request & { io?: Server }, res: Response) {
+  createFile(title: string, icon: string, folderId: string = "0") {
+    console.log("Creating file:", title, icon, folderId);
     try {
-      const { title, icon, folderId = "0" } = req.body;
       const id = uuidv4();
 
       const maxOrder = db
         .prepare(
-          "SELECT MAX(order_num) as max_order FROM files WHERE folder_id = ?"
+          "SELECT MAX(order_num) as max_order FROM files WHERE folder_id = ?",
         )
         .get(folderId) as { max_order: number };
 
@@ -24,16 +24,10 @@ export class FilesController {
         `
         INSERT INTO files (id, folder_id, title, order_num, type, icon)
         VALUES (?, ?, ?, ?, 'file', ?)
-      `
+      `,
       ).run(id, folderId, title, order, icon);
-
-      // Get updated items list and emit
-      const allItems = foldersController.getAllItemsList();
-      req.io?.emit("items:updated", allItems);
-
-      return foldersController.getAllItems(req, res);
     } catch (error) {
-      res.status(500).json({ error: "Failed to create file" });
+      throw new Error(`Failed to create file ${error}`);
     }
   }
 
@@ -42,10 +36,10 @@ export class FilesController {
       const files = db
         .prepare(
           `
-          SELECT * FROM files 
+          SELECT * FROM files
           WHERE folder_id = '0'
           ORDER BY order_num
-        `
+        `,
         )
         .all();
 
@@ -61,7 +55,7 @@ export class FilesController {
       const { fileIds } = req.body;
 
       const stmt = db.prepare(
-        "UPDATE files SET order_num = ? WHERE id = ? AND folder_id = ?"
+        "UPDATE files SET order_num = ? WHERE id = ? AND folder_id = ?",
       );
 
       db.transaction(() => {
@@ -88,7 +82,7 @@ export class FilesController {
         // Get current file info
         const currentFile: FileType = db
           .prepare(
-            `SELECT folder_id as folderId, order_num as "order" FROM files WHERE id = ?`
+            `SELECT folder_id as folderId, order_num as "order" FROM files WHERE id = ?`,
           )
           .get(fileId) as FileType;
 
@@ -99,7 +93,7 @@ export class FilesController {
             `UPDATE files
              SET order_num = order_num - 1
              WHERE folder_id = ?
-             AND order_num > ?`
+             AND order_num > ?`,
           ).run(currentFile.folderId, currentFile.order);
 
           // Then, shift down items in the new folder
@@ -107,19 +101,19 @@ export class FilesController {
             `UPDATE files
              SET order_num = order_num + 1
              WHERE folder_id = ?
-             AND order_num >= ?`
+             AND order_num >= ?`,
           ).run(targetFolderId, newOrder);
         } else {
           // Moving within same folder
           if (currentFile.order < newOrder) {
             // Moving down - shift items up
             db.prepare(
-              `UPDATE files 
+              `UPDATE files
                SET order_num = order_num - 1
                WHERE folder_id = ?
                AND order_num > ?
                AND order_num <= ?
-               AND id != ?`
+               AND id != ?`,
             ).run(targetFolderId, currentFile.order, newOrder - 1, fileId);
           } else {
             // Moving up - shift items down
@@ -129,16 +123,16 @@ export class FilesController {
                WHERE folder_id = ?
                AND order_num >= ?
                AND order_num < ?
-               AND id != ?`
+               AND id != ?`,
             ).run(targetFolderId, newOrder, currentFile.order, fileId);
           }
         }
 
         // Finally, update the dragged file's position
         db.prepare(
-          `UPDATE files 
+          `UPDATE files
            SET folder_id = ?, order_num = ?
-           WHERE id = ?`
+           WHERE id = ?`,
         ).run(targetFolderId, newOrder, fileId);
       })();
 

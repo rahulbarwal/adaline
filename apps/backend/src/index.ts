@@ -54,6 +54,14 @@ io.on("connection", (socket: Socket) => {
     socketController.onCreatedFolder(title, items);
     socketController.emitUpdatedItemsForHomePage();
   });
+
+  socket.on(
+    SOCKET_EVENTS.FILE_EVENTS.CREATE_FILE,
+    ({ title, icon, folderId }) => {
+      socketController.onCreatedFile(title, icon, folderId);
+      socketController.emitUpdatedItemsForHomePage();
+    },
+  );
 });
 
 const PORT = 3000;

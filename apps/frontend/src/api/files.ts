@@ -17,14 +17,6 @@ export class FilesApi {
     return FilesApi.instance;
   }
 
-  public async createFile(file: Omit<FileType, "id">): Promise<ItemType[]> {
-    const response = await this.client.post<ItemType[]>("/files", {
-      ...file,
-      folderId: "0", // Default to root folder
-    });
-    return response.data;
-  }
-
   public async getRootFiles(): Promise<FileType[]> {
     const response = await this.client.get<FileType[]>("/files/root");
     return response.data;
@@ -32,13 +24,13 @@ export class FilesApi {
 
   public async reorderFiles(
     folderId: string,
-    fileIds: string[]
+    fileIds: string[],
   ): Promise<ItemType[]> {
     const response = await this.client.patch<ItemType[]>(
       `/files/folders/${folderId}/files/reorder`,
       {
         fileIds,
-      }
+      },
     );
     return response.data;
   }
@@ -47,7 +39,7 @@ export class FilesApi {
   public async transferFile(
     fileId: string,
     targetFolderId: string,
-    newOrder: number
+    newOrder: number,
   ): Promise<ItemType[]> {
     const response = await this.client.post<ItemType[]>("/files/transfer", {
       fileId,

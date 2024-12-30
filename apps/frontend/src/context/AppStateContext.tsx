@@ -16,11 +16,8 @@ type AppStateContextType = {
   reorderItems: (folderId: string, newOrder: ItemType[]) => Promise<void>;
   reorderFiles: (folderId: string, newOrder: ItemType[]) => Promise<void>;
   toggleFolder: (folderId: string) => Promise<void>;
-  createFolder: (
-    name: string,
-    fileIds: string[],
-  ) => Promise<ItemType[] | undefined>;
-  createFile: (name: string, icon: string) => Promise<ItemType[] | undefined>;
+  createFolder: (name: string, fileIds: string[]) => void;
+  createFile: (name: string, icon: string) => void;
   checkedFiles: string[];
   toggleCheckedFile: (fileId: string) => void;
   clearCheckedFiles: () => void;
@@ -68,25 +65,23 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
     setIsLoading(false);
   };
 
-  const createFile = async (name: string, icon: string) => {
+  const createFile = (name: string, icon: string) => {
     try {
       setIsLoading(true);
-      const newItems = await filesApi.createFile({
+      socketClient.emit(SOCKET_EVENTS.FILE_EVENTS.CREATE_FILE, {
         title: name,
         icon,
-        type: "file",
-        order: items.filter((item) => item.type === "file").length + 1,
         folderId: "0",
       });
-      setItems(newItems);
+
       setIsLoading(false);
-      return newItems;
     } catch (error) {
+      console.error("Failed to create file:", error);
       handleApiError(error);
     }
   };
 
-  const createFolder = async (name: string, fileIds: string[]) => {
+  const createFolder = (name: string, fileIds: string[]) => {
     try {
       setIsLoading(true);
 

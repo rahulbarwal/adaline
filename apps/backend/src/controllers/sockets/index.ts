@@ -2,6 +2,7 @@ import { FileType, ItemType, SOCKET_EVENTS } from "@adaline/shared-types";
 import { Server, Socket } from "socket.io";
 import { foldersController } from "../folders";
 import { isTruthy } from "../../utils/validity-utils";
+import { filesController } from "../files";
 
 export class SocketController {
   private io: Server;
@@ -43,4 +44,13 @@ export class SocketController {
     }
     foldersController.createFolder(title, items);
   }
+
+  // #region File Operations
+  onCreatedFile(title: string, icon: string, folderId: string) {
+    if (!isTruthy(title) || !isTruthy(icon)) {
+      throw new Error("Invalid title, icon or folderId");
+    }
+    filesController.createFile(title, icon, folderId);
+  }
+  // #endregion
 }

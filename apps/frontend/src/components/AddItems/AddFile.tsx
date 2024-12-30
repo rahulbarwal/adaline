@@ -14,7 +14,7 @@ export const AddFile = ({ onCancel }: AddFileProps) => {
   const [icon, setIcon] = useState("file");
   const handleSubmit = async () => {
     if (!name.trim()) return;
-    await createFile(name, icon);
+    createFile(name, icon);
     setName("");
     onCancel();
   };
