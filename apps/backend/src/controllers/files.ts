@@ -1,7 +1,6 @@
 import { Request, Response } from "express";
 import { v4 as uuidv4 } from "uuid";
 import db from "../db";
-import { DBFile } from "../types";
 import { foldersController } from "./folders";
 import { Server } from "socket.io";
 import { FileType } from "@adaline/shared-types";
@@ -49,11 +48,8 @@ export class FilesController {
     }
   }
 
-  reorderFiles(req: Request & { io?: Server }, res: Response) {
+  reorderFiles(folderId: string, fileIds: string[]) {
     try {
-      const { folderId } = req.params;
-      const { fileIds } = req.body;
-
       const stmt = db.prepare(
         "UPDATE files SET order_num = ? WHERE id = ? AND folder_id = ?",
       );
@@ -63,14 +59,8 @@ export class FilesController {
           stmt.run(index + 1, id, folderId);
         });
       })();
-
-      // Get updated items list and emit
-      const allItems = foldersController.getAllItemsList();
-      req.io?.emit("items:updated", allItems);
-
-      return foldersController.getAllItems(req, res);
     } catch (error) {
-      res.status(500).json({ error: "Failed to reorder files" });
+      throw new Error(`Failed to reorder files ${error}`);
     }
   }
 

@@ -62,6 +62,14 @@ io.on("connection", (socket: Socket) => {
       socketController.emitUpdatedItemsForHomePage();
     },
   );
+
+  socket.on(
+    SOCKET_EVENTS.FILE_EVENTS.REORDER_FILES,
+    ({ folderId, fileIds }) => {
+      socketController.onFilesReorder(folderId, fileIds);
+      socketController.emitUpdatedItemsForHomePage();
+    },
+  );
 });
 
 const PORT = 3000;

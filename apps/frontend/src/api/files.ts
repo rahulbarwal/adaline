@@ -22,19 +22,6 @@ export class FilesApi {
     return response.data;
   }
 
-  public async reorderFiles(
-    folderId: string,
-    fileIds: string[],
-  ): Promise<ItemType[]> {
-    const response = await this.client.patch<ItemType[]>(
-      `/files/folders/${folderId}/files/reorder`,
-      {
-        fileIds,
-      },
-    );
-    return response.data;
-  }
-
   // Add the new transfer method
   public async transferFile(
     fileId: string,

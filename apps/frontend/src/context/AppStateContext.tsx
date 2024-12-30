@@ -61,6 +61,7 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const handleApiError = (error: any) => {
+    console.error(error);
     setError(error?.response?.data?.message || "An error occurred");
     setIsLoading(false);
   };
@@ -76,7 +77,6 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
 
       setIsLoading(false);
     } catch (error) {
-      console.error("Failed to create file:", error);
       handleApiError(error);
     }
   };
@@ -133,8 +133,11 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
     try {
       setIsLoading(true);
       const fileIds = newOrder.map((file) => file.id);
-      const response = await filesApi.reorderFiles(folderId, fileIds);
-      setItems(response);
+
+      socketClient.emit(SOCKET_EVENTS.FILE_EVENTS.REORDER_FILES, {
+        folderId,
+        fileIds,
+      });
       setIsLoading(false);
     } catch (error) {
       handleApiError(error);
@@ -195,10 +198,10 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
       // Check if we're reordering files or folders
       if (draggedItem.current?.type === "file") {
         const rootFiles = newItems.filter((item) => item.type === "file");
-        await filesApi.reorderFiles(
-          "0",
-          rootFiles.map((file) => file.id),
-        );
+        socketClient.emit(SOCKET_EVENTS.FILE_EVENTS.REORDER_FILES, {
+          folderId: "0",
+          fileIds: rootFiles.map((file) => file.id),
+        });
       } else {
         socketClient.emit(SOCKET_EVENTS.FOLDER_EVENTS.REORDER_FOLDERS, {
           folderIds: newItems.map((item) => item.id),
@@ -207,6 +210,7 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
 
       setIsLoading(false);
     } catch (error) {
+      console.error("Failed to update items:", error);
       handleApiError(error);
     }
   };

@@ -52,5 +52,15 @@ export class SocketController {
     }
     filesController.createFile(title, icon, folderId);
   }
+
+  onFilesReorder(folderId: string, fileIds: string[]) {
+    if (
+      !isTruthy(folderId) ||
+      (!isTruthy(fileIds) && !Array.isArray(fileIds))
+    ) {
+      throw new Error("Invalid folderId or fileIds");
+    }
+    filesController.reorderFiles(folderId, fileIds);
+  }
   // #endregion
 }

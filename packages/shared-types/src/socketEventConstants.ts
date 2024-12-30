@@ -6,6 +6,8 @@ export const SOCKET_EVENTS = {
   },
   FILE_EVENTS: {
     CREATE_FILE: "file:create",
+    REORDER_FILES: "file:reorder",
+    TRANSFER_FILE: "file:transfer",
   },
   ITEMS_UPDATED: "items:updated",
   CONNECT: "connect",
