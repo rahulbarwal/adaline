@@ -62,5 +62,12 @@ export class SocketController {
     }
     filesController.reorderFiles(folderId, fileIds);
   }
+
+  onTransferFile(fileId: string, targetFolderId: string, newOrder: number) {
+    if (!isTruthy(fileId) || !isTruthy(targetFolderId) || !isTruthy(newOrder)) {
+      throw new Error("Invalid fileId, targetFolderId or newOrder");
+    }
+    filesController.transferFile(fileId, targetFolderId, newOrder);
+  }
   // #endregion
 }

@@ -30,24 +30,6 @@ export class FilesController {
     }
   }
 
-  getRootFiles(req: Request, res: Response) {
-    try {
-      const files = db
-        .prepare(
-          `
-          SELECT * FROM files
-          WHERE folder_id = '0'
-          ORDER BY order_num
-        `,
-        )
-        .all();
-
-      res.json(files);
-    } catch (error) {
-      res.status(500).json({ error: "Failed to fetch root files" });
-    }
-  }
-
   reorderFiles(folderId: string, fileIds: string[]) {
     try {
       const stmt = db.prepare(
@@ -64,10 +46,8 @@ export class FilesController {
     }
   }
 
-  transferFile(req: Request & { io?: Server }, res: Response) {
+  transferFile(fileId: string, targetFolderId: string, newOrder: number) {
     try {
-      const { fileId, targetFolderId, newOrder } = req.body;
-
       db.transaction(() => {
         // Get current file info
         const currentFile: FileType = db
@@ -125,15 +105,8 @@ export class FilesController {
            WHERE id = ?`,
         ).run(targetFolderId, newOrder, fileId);
       })();
-
-      // Get updated items list and emit
-      const allItems = foldersController.getAllItemsList();
-      req.io?.emit("items:updated", allItems);
-
-      return foldersController.getAllItems(req, res);
     } catch (error) {
-      console.error("Failed to transfer file:", error);
-      res.status(500).json({ error: "Failed to transfer file" });
+      throw new Error(`Failed to transfer file: ${error}`);
     }
   }
 }

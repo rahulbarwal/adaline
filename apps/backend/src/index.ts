@@ -2,7 +2,6 @@ import cors from "cors";
 import express from "express";
 import { createServer } from "http";
 import { Server, Socket } from "socket.io";
-import fileRoutes from "./routes/files";
 import { SocketController } from "./controllers/sockets";
 import { SOCKET_EVENTS } from "@adaline/shared-types";
 
@@ -24,8 +23,6 @@ app.use((req: any, res, next) => {
   req.io = io;
   next();
 });
-
-app.use("/api/files", fileRoutes);
 
 // WebSocket event handlers
 
@@ -67,6 +64,14 @@ io.on("connection", (socket: Socket) => {
     SOCKET_EVENTS.FILE_EVENTS.REORDER_FILES,
     ({ folderId, fileIds }) => {
       socketController.onFilesReorder(folderId, fileIds);
+      socketController.emitUpdatedItemsForHomePage();
+    },
+  );
+
+  socket.on(
+    SOCKET_EVENTS.FILE_EVENTS.TRANSFER_FILE,
+    ({ fileId, targetFolderId, newOrder }) => {
+      socketController.onTransferFile(fileId, targetFolderId, newOrder);
       socketController.emitUpdatedItemsForHomePage();
     },
   );

@@ -7,7 +7,6 @@ import {
   useEffect,
   useState,
 } from "react";
-import { filesApi } from "../api/files";
 import { socketClient } from "../socket";
 import { useDragAndDrop } from "../context/DragAndDropContext";
 
@@ -180,14 +179,13 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
     newOrder: number,
   ) => {
     try {
-      const newItems = await filesApi.transferFile(
+      socketClient.emit(SOCKET_EVENTS.FILE_EVENTS.TRANSFER_FILE, {
         fileId,
         targetFolderId,
         newOrder,
-      );
-      setItems(newItems);
+      });
     } catch (error) {
-      console.error("Failed to transfer file:", error);
+      handleApiError(error);
     }
   };
 
@@ -210,7 +208,6 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
 
       setIsLoading(false);
     } catch (error) {
-      console.error("Failed to update items:", error);
       handleApiError(error);
     }
   };
