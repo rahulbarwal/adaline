@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
 import { v4 as uuidv4 } from "uuid";
 import db from "../db";
-import { ItemType } from "@adaline/shared-types";
+import { FileType, ItemType } from "@adaline/shared-types";
 import { Server } from "socket.io";
 
 export class FoldersController {
@@ -14,9 +14,8 @@ export class FoldersController {
     this.getAllItemsViaSockets = this.getAllItemsViaSockets.bind(this);
   }
 
-  createFolder(req: Request & { io?: Server }, res: Response) {
+  createFolder(title: string, items: FileType[]) {
     try {
-      const { title, items } = req.body;
       const id = uuidv4();
 
       db.transaction(() => {
@@ -44,15 +43,9 @@ export class FoldersController {
             }
           });
         }
-
-        const allItems = this.getAllItemsList();
-        req.io?.emit("items:updated", allItems);
-
-        return this.getAllItems(req, res);
       })();
     } catch (error) {
       console.error("Error creating folder:", error);
-      res.status(500).json({ error: "Failed to create folder" });
     }
   }
 

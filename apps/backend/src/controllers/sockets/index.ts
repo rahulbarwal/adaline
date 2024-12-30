@@ -1,4 +1,4 @@
-import { ItemType, SOCKET_EVENTS } from "@adaline/shared-types";
+import { FileType, ItemType, SOCKET_EVENTS } from "@adaline/shared-types";
 import { Server, Socket } from "socket.io";
 import { foldersController } from "../folders";
 import { isTruthy } from "../../utils/validity-utils";
@@ -35,5 +35,12 @@ export class SocketController {
       throw new Error("Invalid folderId or isOpen value");
     }
     foldersController.toggleFolder(folderId, isOpen);
+  }
+
+  onCreatedFolder(title: string, items: FileType[]) {
+    if (!isTruthy(title) || (!isTruthy(items) && !Array.isArray(items))) {
+      throw new Error("Invalid title or items");
+    }
+    foldersController.createFolder(title, items);
   }
 }

@@ -8,7 +8,6 @@ import {
   useState,
 } from "react";
 import { filesApi } from "../api/files";
-import { foldersApi } from "../api/folders";
 import { socketClient } from "../socket";
 import { useDragAndDrop } from "../context/DragAndDropContext";
 
@@ -111,19 +110,13 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
         })
         .filter((file): file is ItemType => file !== undefined);
 
-      const allItems = await foldersApi.createFolder({
+      socketClient.emit(SOCKET_EVENTS.FOLDER_EVENTS.CREATE_FOLDER, {
         title: name,
-        icon: "folder",
-        type: "folder",
-        order: items.filter((item) => item.type === "folder").length + 1,
-        isOpen: true,
         items: selectedFiles,
       });
 
-      setItems(allItems);
       clearCheckedFiles();
       setIsLoading(false);
-      return allItems;
     } catch (error) {
       handleApiError(error);
     }

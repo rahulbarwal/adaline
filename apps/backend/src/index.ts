@@ -2,7 +2,6 @@ import cors from "cors";
 import express from "express";
 import { createServer } from "http";
 import { Server, Socket } from "socket.io";
-import folderRoutes from "./routes/folders";
 import fileRoutes from "./routes/files";
 import { SocketController } from "./controllers/sockets";
 import { SOCKET_EVENTS } from "@adaline/shared-types";
@@ -26,7 +25,6 @@ app.use((req: any, res, next) => {
   next();
 });
 
-app.use("/api/folders", folderRoutes);
 app.use("/api/files", fileRoutes);
 
 // WebSocket event handlers
@@ -51,6 +49,11 @@ io.on("connection", (socket: Socket) => {
       socketController.emitUpdatedItemsForHomePage();
     },
   );
+
+  socket.on(SOCKET_EVENTS.FOLDER_EVENTS.CREATE_FOLDER, ({ title, items }) => {
+    socketController.onCreatedFolder(title, items);
+    socketController.emitUpdatedItemsForHomePage();
+  });
 });
 
 const PORT = 3000;
