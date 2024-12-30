@@ -23,28 +23,6 @@ export class FoldersApi {
     const response = await this.client.post<ItemType[]>("/folders", folder);
     return response.data;
   }
-
-  public async toggleFolder(
-    folderId: string,
-    isOpen: boolean,
-  ): Promise<ItemType[]> {
-    const response = await this.client.patch<ItemType[]>(
-      `/folders/${folderId}/toggle`,
-      {
-        isOpen,
-      },
-    );
-    return response.data;
-  }
-
-  public async reorderFolders(items: ItemType[]): Promise<ItemType[]> {
-    const response = await this.client.patch<ItemType[]>("/folders/reorder", {
-      folderIds: items
-        .filter((item) => item.type === "folder")
-        .map((item) => item.id),
-    });
-    return response.data;
-  }
 }
 
 export const foldersApi = FoldersApi.getInstance();

@@ -53,7 +53,7 @@ export const useDragAndDropHandlers = () => {
       dropTarget.classList.remove(
         "border-t-2",
         "border-b-2",
-        "border-blue-500"
+        "border-blue-500",
       );
       if (e.clientY < midY) {
         dropTarget.classList.add("border-t-2", "border-blue-500");
@@ -83,7 +83,7 @@ export const useDragAndDropHandlers = () => {
     e.currentTarget.classList.remove(
       "border-t-2",
       "border-b-2",
-      "border-blue-500"
+      "border-blue-500",
     );
   };
 
@@ -96,7 +96,7 @@ export const useDragAndDropHandlers = () => {
   const handleDropAtRoot = (
     e: React.DragEvent,
     targetItem: ItemType,
-    items: ItemType[]
+    items: ItemType[],
   ) => {
     e.preventDefault();
 
@@ -131,7 +131,7 @@ export const useDragAndDropHandlers = () => {
     e: React.DragEvent,
     targetItem: ItemType,
     folderId: string,
-    folderItems: ItemType[]
+    folderItems: ItemType[],
   ) => {
     e.preventDefault();
     e.stopPropagation();
@@ -151,7 +151,7 @@ export const useDragAndDropHandlers = () => {
     } else {
       // Find target index among files
       const targetIndex = fileItems.findIndex(
-        (item) => item.id === targetItem.id
+        (item) => item.id === targetItem.id,
       );
 
       // When dropping after, we want the position after the target
@@ -167,7 +167,7 @@ export const useDragAndDropHandlers = () => {
   const handleFolderDrop = async (
     e: React.DragEvent,
     folderId: string,
-    folderItems: ItemType[]
+    folderItems: ItemType[],
   ) => {
     e.preventDefault();
     e.stopPropagation();

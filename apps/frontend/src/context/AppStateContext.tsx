@@ -129,11 +129,12 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const reorderItems = async (_: string, newOrder: ItemType[]) => {
+  const reorderItems = async (_: string, folders: ItemType[]) => {
     try {
       setIsLoading(true);
-      const response = await foldersApi.reorderFolders(newOrder);
-      setItems(response);
+      socketClient.emit(SOCKET_EVENTS.FOLDER_EVENTS.REORDER_FOLDERS, {
+        folderIds: folders.map((item) => item.id),
+      });
       setIsLoading(false);
     } catch (error) {
       handleApiError(error);
@@ -202,20 +203,20 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
   const updateItems = async (newItems: ItemType[]) => {
     try {
       setIsLoading(true);
-      let response;
 
       // Check if we're reordering files or folders
       if (draggedItem.current?.type === "file") {
         const rootFiles = newItems.filter((item) => item.type === "file");
-        response = await filesApi.reorderFiles(
+        await filesApi.reorderFiles(
           "0",
           rootFiles.map((file) => file.id),
         );
       } else {
-        response = await foldersApi.reorderFolders(newItems);
+        socketClient.emit(SOCKET_EVENTS.FOLDER_EVENTS.REORDER_FOLDERS, {
+          folderIds: newItems.map((item) => item.id),
+        });
       }
 
-      setItems(response);
       setIsLoading(false);
     } catch (error) {
       handleApiError(error);

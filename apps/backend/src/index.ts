@@ -5,8 +5,7 @@ import { Server, Socket } from "socket.io";
 import folderRoutes from "./routes/folders";
 import fileRoutes from "./routes/files";
 import { SocketController } from "./controllers/sockets";
-import { ItemType, SOCKET_EVENTS } from "@adaline/shared-types";
-import { foldersController } from "./controllers/folders";
+import { SOCKET_EVENTS } from "@adaline/shared-types";
 
 const app = express();
 const httpServer = createServer(app);
@@ -38,6 +37,11 @@ io.on("connection", (socket: Socket) => {
 
   socket.on("disconnect", () => {
     console.log("Client disconnected:", socket.id);
+  });
+
+  socket.on(SOCKET_EVENTS.FOLDER_EVENTS.REORDER_FOLDERS, ({ folderIds }) => {
+    socketController.onFoldersReorder(folderIds);
+    socketController.emitUpdatedItemsForHomePage();
   });
 
   socket.on(

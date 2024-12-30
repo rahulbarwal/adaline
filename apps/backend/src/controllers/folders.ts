@@ -8,9 +8,10 @@ export class FoldersController {
   constructor() {
     this.createFolder = this.createFolder.bind(this);
     this.toggleFolder = this.toggleFolder.bind(this);
-    this.reorderFolders = this.reorderFolders.bind(this);
     this.getAllItems = this.getAllItems.bind(this);
     this.getAllItemsList = this.getAllItemsList.bind(this);
+    this.reorderFolders = this.reorderFolders.bind(this);
+    this.getAllItemsViaSockets = this.getAllItemsViaSockets.bind(this);
   }
 
   createFolder(req: Request & { io?: Server }, res: Response) {
@@ -66,10 +67,8 @@ export class FoldersController {
     }
   }
 
-  reorderFolders(req: Request & { io?: Server }, res: Response) {
+  reorderFolders(folderIds: string[]) {
     try {
-      const { folderIds } = req.body;
-
       const stmt = db.prepare("UPDATE folders SET order_num = ? WHERE id = ?");
 
       db.transaction(() => {
@@ -77,14 +76,8 @@ export class FoldersController {
           stmt.run(index + 1, id);
         });
       })();
-
-      // Get updated items list and emit
-      const allItems = this.getAllItemsList();
-      req.io?.emit("items:updated", allItems);
-
-      this.getAllItems(req, res);
     } catch (error) {
-      res.status(500).json({ error: "Failed to reorder folders" });
+      throw new Error("Failed to reorder folders");
     }
   }
 

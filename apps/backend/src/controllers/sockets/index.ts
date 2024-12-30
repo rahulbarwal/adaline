@@ -23,6 +23,13 @@ export class SocketController {
     }
   }
 
+  onFoldersReorder(folderIds: string[]) {
+    if (!isTruthy(folderIds) && !Array.isArray(folderIds)) {
+      throw new Error("Invalid folderIds value");
+    }
+    foldersController.reorderFolders(folderIds);
+  }
+
   onFolderToggle(folderId: string, isOpen: boolean) {
     if (!isTruthy(folderId) || !isTruthy(isOpen)) {
       throw new Error("Invalid folderId or isOpen value");
