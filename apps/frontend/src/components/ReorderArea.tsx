@@ -11,7 +11,7 @@ export function ReorderArea() {
   const { items, toggleFolder } = useAppState();
   const { isDragging } = useDragAndDrop();
   const [dropPosition, setDropPosition] = useState<"top" | "bottom" | null>(
-    null
+    null,
   );
 
   const {
@@ -70,7 +70,7 @@ export function ReorderArea() {
           />
           <span>{folder.title}</span>
         </div>
-        {folder.isOpen && (
+        {!!folder.isOpen && (
           <div className="pl-8 mt-2 p-4">
             <div
               className={`flex flex-col gap-2 transition-all duration-200 ${
@@ -117,7 +117,7 @@ export function ReorderArea() {
         handleDragOver(e, item);
         const rect = e.currentTarget.getBoundingClientRect();
         setDropPosition(
-          e.clientY > rect.top + rect.height / 2 ? "bottom" : "top"
+          e.clientY > rect.top + rect.height / 2 ? "bottom" : "top",
         );
       },
       onDragLeave: (e: React.DragEvent) => {

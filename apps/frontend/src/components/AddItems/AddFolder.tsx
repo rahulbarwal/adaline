@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useAppState } from "../../context/AppStateContext";
 
 export const AddFolder = () => {
-  const { createFolder, checkedFiles, isLoading, items } = useAppState();
+  const { createFolder, checkedFiles, isLoading } = useAppState();
   const [name, setName] = useState("");
 
   const getSelectedFilesCount = () => {

@@ -1,22 +1,21 @@
 import { Request, Response } from "express";
 import { v4 as uuidv4 } from "uuid";
 import db from "../db";
-import { DBFile, DBFolder } from "../types";
-import { ItemType } from "@adaline/shared-types";
+import { FileType, ItemType } from "@adaline/shared-types";
 import { Server } from "socket.io";
 
 export class FoldersController {
   constructor() {
     this.createFolder = this.createFolder.bind(this);
     this.toggleFolder = this.toggleFolder.bind(this);
-    this.reorderFolders = this.reorderFolders.bind(this);
     this.getAllItems = this.getAllItems.bind(this);
     this.getAllItemsList = this.getAllItemsList.bind(this);
+    this.reorderFolders = this.reorderFolders.bind(this);
+    this.getAllItemsViaSockets = this.getAllItemsViaSockets.bind(this);
   }
 
-  createFolder(req: Request & { io?: Server }, res: Response) {
+  createFolder(title: string, items: FileType[]) {
     try {
-      const { title, items } = req.body;
       const id = uuidv4();
 
       db.transaction(() => {
@@ -30,12 +29,12 @@ export class FoldersController {
           `
           INSERT INTO folders (id, title, order_num, type, icon, is_open)
           VALUES (?, ?, ?, 'folder', 'folder', true)
-          `
+          `,
         ).run(id, title, order);
 
         if (items && items.length > 0) {
           const updateParentStmt = db.prepare(
-            "UPDATE files SET folder_id = ?, order_num = ? WHERE id = ?"
+            "UPDATE files SET folder_id = ?, order_num = ? WHERE id = ?",
           );
 
           items.forEach((item: ItemType, index: number) => {
@@ -44,42 +43,25 @@ export class FoldersController {
             }
           });
         }
-
-        const allItems = this.getAllItemsList();
-        req.io?.emit("items:updated", allItems);
-
-        return this.getAllItems(req, res);
       })();
     } catch (error) {
       console.error("Error creating folder:", error);
-      res.status(500).json({ error: "Failed to create folder" });
     }
   }
 
-  toggleFolder(req: Request & { io?: Server }, res: Response) {
+  toggleFolder(folderId: string, isOpen: boolean) {
     try {
-      const { id } = req.params;
-      const { isOpen } = req.body;
-
       db.prepare("UPDATE folders SET is_open = ? WHERE id = ?").run(
         isOpen ? 1 : 0,
-        id
+        folderId,
       );
-
-      // Get updated items list and emit
-      const allItems = this.getAllItemsList();
-      req.io?.emit("items:updated", allItems);
-
-      this.getAllItems(req, res);
     } catch (error) {
-      res.status(500).json({ error: "Failed to toggle folder" });
+      throw new Error("Failed to toggle folder");
     }
   }
 
-  reorderFolders(req: Request & { io?: Server }, res: Response) {
+  reorderFolders(folderIds: string[]) {
     try {
-      const { folderIds } = req.body;
-
       const stmt = db.prepare("UPDATE folders SET order_num = ? WHERE id = ?");
 
       db.transaction(() => {
@@ -87,14 +69,8 @@ export class FoldersController {
           stmt.run(index + 1, id);
         });
       })();
-
-      // Get updated items list and emit
-      const allItems = this.getAllItemsList();
-      req.io?.emit("items:updated", allItems);
-
-      this.getAllItems(req, res);
     } catch (error) {
-      res.status(500).json({ error: "Failed to reorder folders" });
+      throw new Error("Failed to reorder folders");
     }
   }
 
@@ -103,16 +79,16 @@ export class FoldersController {
     const rootFiles = db
       .prepare(
         `
-        SELECT 
+        SELECT
           id,
           title,
           order_num as "order",
           type,
           icon
-        FROM files 
+        FROM files
         WHERE folder_id = '0'
         ORDER BY order_num
-      `
+      `,
       )
       .all();
 
@@ -120,7 +96,7 @@ export class FoldersController {
       .prepare(
         `
         WITH FolderFiles AS (
-          SELECT 
+          SELECT
             f.id as folder_id,
             f.title as folder_title,
             f.order_num as folder_order,
@@ -137,7 +113,7 @@ export class FoldersController {
           WHERE f.id != '0'
           ORDER BY f.order_num, files.order_num
         )
-        SELECT 
+        SELECT
           folder_id as id,
           folder_title as title,
           folder_order as "order",
@@ -145,7 +121,7 @@ export class FoldersController {
           folder_icon as icon,
           is_open as isOpen,
           json_group_array(
-            CASE 
+            CASE
               WHEN file_id IS NULL THEN NULL
               ELSE json_object(
                 'id', file_id,
@@ -159,7 +135,7 @@ export class FoldersController {
         FROM FolderFiles
         GROUP BY folder_id
         ORDER BY folder_order
-      `
+      `,
       )
       .all();
 
@@ -170,10 +146,10 @@ export class FoldersController {
 
     return [
       ...rootFiles.sort(
-        (a, b) => (a as ItemType).order - (b as ItemType).order
+        (a, b) => (a as ItemType).order - (b as ItemType).order,
       ),
       ...cleanedFolders.sort(
-        (a, b) => (a as ItemType).order - (b as ItemType).order
+        (a, b) => (a as ItemType).order - (b as ItemType).order,
       ),
     ];
   }
@@ -185,6 +161,14 @@ export class FoldersController {
     } catch (error) {
       console.error("Error in getAllItems:", error);
       res.status(500).json({ error: "Failed to fetch items" });
+    }
+  }
+
+  getAllItemsViaSockets() {
+    try {
+      return this.getAllItemsList();
+    } catch (error) {
+      console.error("Error in getAllItems:", error);
     }
   }
 }

@@ -4,8 +4,7 @@ import { useDragAndDrop } from "../context/DragAndDropContext";
 
 export const useDragAndDropHandlers = () => {
   const { draggedItem, setIsDragging } = useDragAndDrop();
-  const { transferFile, reorderFiles, reorderItems, updateItems } =
-    useAppState();
+  const { transferFile, updateItems } = useAppState();
 
   const handleDragStart = (e: React.DragEvent, item: ItemType) => {
     e.stopPropagation();
@@ -54,7 +53,7 @@ export const useDragAndDropHandlers = () => {
       dropTarget.classList.remove(
         "border-t-2",
         "border-b-2",
-        "border-blue-500"
+        "border-blue-500",
       );
       if (e.clientY < midY) {
         dropTarget.classList.add("border-t-2", "border-blue-500");
@@ -84,7 +83,7 @@ export const useDragAndDropHandlers = () => {
     e.currentTarget.classList.remove(
       "border-t-2",
       "border-b-2",
-      "border-blue-500"
+      "border-blue-500",
     );
   };
 
@@ -94,71 +93,10 @@ export const useDragAndDropHandlers = () => {
     e.currentTarget.classList.remove("bg-yellow-50");
   };
 
-  const handleReorder = async (
-    e: React.DragEvent,
-    targetItem: ItemType,
-    items: ItemType[],
-    options: {
-      folderId: string;
-      filterFn?: (item: ItemType) => boolean;
-    } & (
-      | {
-          targetType: "file";
-          reorderFn: typeof reorderFiles;
-        }
-      | {
-          targetType: "folder";
-          reorderFn: typeof reorderItems;
-        }
-    )
-  ) => {
-    e.preventDefault();
-    e.stopPropagation();
-    e.currentTarget.classList.remove(
-      "border-t-2",
-      "border-b-2",
-      "border-blue-500"
-    );
-
-    if (!draggedItem.current || draggedItem.current.type !== targetItem.type)
-      return;
-
-    const itemsToReorder = options.filterFn
-      ? items.filter(options.filterFn)
-      : items;
-
-    const draggedIndex = itemsToReorder.findIndex(
-      (item) => item.id === draggedItem.current?.id
-    );
-    const targetIndex = itemsToReorder.findIndex(
-      (item) => item.id === targetItem.id
-    );
-
-    if (draggedIndex === targetIndex) return;
-
-    const rect = e.currentTarget.getBoundingClientRect();
-    const midY = rect.top + rect.height / 2;
-    const dropAfter = e.clientY > midY;
-
-    if (
-      draggedItem.current.type === "file" &&
-      draggedItem.current.folderId !== options.folderId
-    ) {
-      const newOrder = dropAfter ? targetIndex + 2 : targetIndex + 1;
-      await transferFile(draggedItem.current.id, options.folderId, newOrder);
-    } else {
-      const newItems = [...itemsToReorder];
-      newItems.splice(draggedIndex, 1);
-      const insertIndex = dropAfter ? targetIndex + 1 : targetIndex;
-      newItems.splice(insertIndex, 0, draggedItem.current);
-      await options.reorderFn(options.folderId, newItems);
-    }
-  };
-
   const handleDropAtRoot = (
     e: React.DragEvent,
     targetItem: ItemType,
-    items: ItemType[]
+    items: ItemType[],
   ) => {
     e.preventDefault();
 
@@ -193,7 +131,7 @@ export const useDragAndDropHandlers = () => {
     e: React.DragEvent,
     targetItem: ItemType,
     folderId: string,
-    folderItems: ItemType[]
+    folderItems: ItemType[],
   ) => {
     e.preventDefault();
     e.stopPropagation();
@@ -213,7 +151,7 @@ export const useDragAndDropHandlers = () => {
     } else {
       // Find target index among files
       const targetIndex = fileItems.findIndex(
-        (item) => item.id === targetItem.id
+        (item) => item.id === targetItem.id,
       );
 
       // When dropping after, we want the position after the target
@@ -229,7 +167,7 @@ export const useDragAndDropHandlers = () => {
   const handleFolderDrop = async (
     e: React.DragEvent,
     folderId: string,
-    folderItems: ItemType[]
+    folderItems: ItemType[],
   ) => {
     e.preventDefault();
     e.stopPropagation();

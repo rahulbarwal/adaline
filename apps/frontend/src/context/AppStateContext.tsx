@@ -1,4 +1,5 @@
-import { FolderType, ItemType } from "@adaline/shared-types";
+import { FolderType, ItemType, SOCKET_EVENTS } from "@adaline/shared-types";
+
 import {
   createContext,
   ReactNode,
@@ -6,9 +7,7 @@ import {
   useEffect,
   useState,
 } from "react";
-import { filesApi } from "../api/files";
-import { foldersApi } from "../api/folders";
-import { io } from "socket.io-client";
+import { socketClient } from "../socket";
 import { useDragAndDrop } from "../context/DragAndDropContext";
 
 type AppStateContextType = {
@@ -16,11 +15,8 @@ type AppStateContextType = {
   reorderItems: (folderId: string, newOrder: ItemType[]) => Promise<void>;
   reorderFiles: (folderId: string, newOrder: ItemType[]) => Promise<void>;
   toggleFolder: (folderId: string) => Promise<void>;
-  createFolder: (
-    name: string,
-    fileIds: string[]
-  ) => Promise<ItemType[] | undefined>;
-  createFile: (name: string, icon: string) => Promise<ItemType[] | undefined>;
+  createFolder: (name: string, fileIds: string[]) => void;
+  createFile: (name: string, icon: string) => void;
   checkedFiles: string[];
   toggleCheckedFile: (fileId: string) => void;
   clearCheckedFiles: () => void;
@@ -29,13 +25,13 @@ type AppStateContextType = {
   transferFile: (
     fileId: string,
     targetFolderId: string,
-    newOrder: number
+    newOrder: number,
   ) => Promise<void>;
   updateItems: (items: ItemType[]) => Promise<void>;
 };
 
 const AppStateContext = createContext<AppStateContextType | undefined>(
-  undefined
+  undefined,
 );
 
 export function AppStateProvider({ children }: { children: ReactNode }) {
@@ -46,60 +42,45 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
   const { draggedItem } = useDragAndDrop();
 
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        setIsLoading(true);
-        const response = await foldersApi.getAllFolders();
-        setItems(response);
-        setIsLoading(false);
-      } catch (error) {
-        handleApiError(error);
-      }
-    };
-
-    fetchData();
-  }, []);
-
-  useEffect(() => {
-    const socket = io("http://localhost:3000");
-
-    socket.on("connect", () => {
+    socketClient.connect();
+    socketClient.on(SOCKET_EVENTS.CONNECT, () => {
       console.log("Connected to WebSocket server");
     });
 
-    socket.on("items:updated", (updatedItems) => {
+    socketClient.on(SOCKET_EVENTS.ITEMS_UPDATED, (updatedItems) => {
       setItems(updatedItems);
     });
 
     return () => {
-      socket.disconnect();
+      console.log("Going to disconnect");
+      socketClient.off(SOCKET_EVENTS.CONNECT);
+      socketClient.off(SOCKET_EVENTS.ITEMS_UPDATED);
+      socketClient.disconnect();
     };
   }, []);
 
   const handleApiError = (error: any) => {
+    console.error(error);
     setError(error?.response?.data?.message || "An error occurred");
     setIsLoading(false);
   };
 
-  const createFile = async (name: string, icon: string) => {
+  const createFile = (name: string, icon: string) => {
     try {
       setIsLoading(true);
-      const newItems = await filesApi.createFile({
+      socketClient.emit(SOCKET_EVENTS.FILE_EVENTS.CREATE_FILE, {
         title: name,
         icon,
-        type: "file",
-        order: items.filter((item) => item.type === "file").length + 1,
         folderId: "0",
       });
-      setItems(newItems);
+
       setIsLoading(false);
-      return newItems;
     } catch (error) {
       handleApiError(error);
     }
   };
 
-  const createFolder = async (name: string, fileIds: string[]) => {
+  const createFolder = (name: string, fileIds: string[]) => {
     try {
       setIsLoading(true);
 
@@ -123,29 +104,24 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
         })
         .filter((file): file is ItemType => file !== undefined);
 
-      const allItems = await foldersApi.createFolder({
+      socketClient.emit(SOCKET_EVENTS.FOLDER_EVENTS.CREATE_FOLDER, {
         title: name,
-        icon: "folder",
-        type: "folder",
-        order: items.filter((item) => item.type === "folder").length + 1,
-        isOpen: true,
         items: selectedFiles,
       });
 
-      setItems(allItems);
       clearCheckedFiles();
       setIsLoading(false);
-      return allItems;
     } catch (error) {
       handleApiError(error);
     }
   };
 
-  const reorderItems = async (_: string, newOrder: ItemType[]) => {
+  const reorderItems = async (_: string, folders: ItemType[]) => {
     try {
       setIsLoading(true);
-      const response = await foldersApi.reorderFolders(newOrder);
-      setItems(response);
+      socketClient.emit(SOCKET_EVENTS.FOLDER_EVENTS.REORDER_FOLDERS, {
+        folderIds: folders.map((item) => item.id),
+      });
       setIsLoading(false);
     } catch (error) {
       handleApiError(error);
@@ -156,8 +132,11 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
     try {
       setIsLoading(true);
       const fileIds = newOrder.map((file) => file.id);
-      const response = await filesApi.reorderFiles(folderId, fileIds);
-      setItems(response);
+
+      socketClient.emit(SOCKET_EVENTS.FILE_EVENTS.REORDER_FILES, {
+        folderId,
+        fileIds,
+      });
       setIsLoading(false);
     } catch (error) {
       handleApiError(error);
@@ -168,14 +147,13 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
     try {
       setIsLoading(true);
       const folder = items.find(
-        (item) => item.type === "folder" && item.id === folderId
+        (item) => item.type === "folder" && item.id === folderId,
       ) as FolderType;
       if (folder) {
-        const response = await foldersApi.toggleFolder(
+        socketClient.emit(SOCKET_EVENTS.FOLDER_EVENTS.TOGGLE_FOLDER, {
           folderId,
-          !folder.isOpen
-        );
-        setItems(response);
+          isOpen: !folder.isOpen,
+        });
       }
       setIsLoading(false);
     } catch (error) {
@@ -187,7 +165,7 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
     setCheckedFiles((prev) =>
       prev.includes(fileId)
         ? prev.filter((id) => id !== fileId)
-        : [...prev, fileId]
+        : [...prev, fileId],
     );
   };
 
@@ -198,37 +176,36 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
   const transferFile = async (
     fileId: string,
     targetFolderId: string,
-    newOrder: number
+    newOrder: number,
   ) => {
     try {
-      const newItems = await filesApi.transferFile(
+      socketClient.emit(SOCKET_EVENTS.FILE_EVENTS.TRANSFER_FILE, {
         fileId,
         targetFolderId,
-        newOrder
-      );
-      setItems(newItems);
+        newOrder,
+      });
     } catch (error) {
-      console.error("Failed to transfer file:", error);
+      handleApiError(error);
     }
   };
 
   const updateItems = async (newItems: ItemType[]) => {
     try {
       setIsLoading(true);
-      let response;
 
       // Check if we're reordering files or folders
       if (draggedItem.current?.type === "file") {
         const rootFiles = newItems.filter((item) => item.type === "file");
-        response = await filesApi.reorderFiles(
-          "0",
-          rootFiles.map((file) => file.id)
-        );
+        socketClient.emit(SOCKET_EVENTS.FILE_EVENTS.REORDER_FILES, {
+          folderId: "0",
+          fileIds: rootFiles.map((file) => file.id),
+        });
       } else {
-        response = await foldersApi.reorderFolders(newItems);
+        socketClient.emit(SOCKET_EVENTS.FOLDER_EVENTS.REORDER_FOLDERS, {
+          folderIds: newItems.map((item) => item.id),
+        });
       }
 
-      setItems(response);
       setIsLoading(false);
     } catch (error) {
       handleApiError(error);
