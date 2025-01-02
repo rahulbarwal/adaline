@@ -84,7 +84,8 @@ export class FoldersController {
           title,
           order_num as "order",
           type,
-          icon
+          icon,
+          folder_id as folderId
         FROM files
         WHERE folder_id = '0'
         ORDER BY order_num
@@ -107,7 +108,8 @@ export class FoldersController {
             files.title as file_title,
             files.order_num as file_order,
             files.type as file_type,
-            files.icon as file_icon
+            files.icon as file_icon,
+            files.folder_id as folderId
           FROM folders f
           LEFT JOIN files ON f.id = files.folder_id
           WHERE f.id != '0'

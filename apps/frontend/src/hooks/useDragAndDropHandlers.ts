@@ -119,8 +119,12 @@ export const useDragAndDropHandlers = () => {
     const insertIndex = isDropAfter ? targetIndex + 1 : targetIndex;
     newItems.splice(insertIndex, 0, draggedItem.current);
 
-    // Update state with new order
-    updateItems(newItems);
+    if (draggedItem.current && draggedItem.current.type === "file") {
+      transferFile(draggedItem.current.id, "0", insertIndex + 1);
+    } else {
+      // Update state with new order
+      updateItems(newItems);
+    }
 
     // Reset drag state
     draggedItem.current = null;
